@@ -1,18 +1,12 @@
-/* eslint-disable no-undef */
-/* eslint-disable no-useless-assignment */
-/* eslint-disable no-unused-vars */
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable react-hooks/set-state-in-effect */
-import { useContext, useEffect, useState } from "react";
+import { useContext, useMemo, useState } from "react";
 import { ShopContext } from "../context/ShopContext";
-import { assets, products } from "../assets/assets";
+import { assets } from "../assets/assets";
 import Title from "../components/Title";
 import ProductItem from "../components/ProductItem";
 
 const Collection = () => {
   const { products } = useContext(ShopContext);
   const [showFilter, setShowFilter] = useState(false);
-  const [filterProducts, setFilterProducts] = useState([]);
   const [category, setCategory] = useState([]);
   const [subCategory, setSubCategory] = useState([]);
   const [sortType, setSortType] = useState("relevant");
@@ -33,7 +27,7 @@ const Collection = () => {
     }
   };
 
-  const applyFilter = () => {
+  const filterProducts = useMemo(() => {
     let productsCopy = products.slice();
 
     if (category.length > 0) {
@@ -48,34 +42,14 @@ const Collection = () => {
       );
     }
 
-    setFilterProducts(productsCopy);
-  };
-
-  const sortProduct = () => {
-    let filterProductsCopy = filterProducts.slice();
-
-    switch (sortType) {
-      case "low-high":
-        setFilterProducts(filterProductsCopy.sort((a, b) => a.price - b.price));
-        break;
-
-      case "high-low":
-        setFilterProducts(filterProductsCopy.sort((a, b) => b.price - a.price));
-        break;
-
-      default:
-        applyFilter();
-        break;
+    if (sortType === "low-high") {
+      productsCopy.sort((a, b) => a.price - b.price);
+    } else if (sortType === "high-low") {
+      productsCopy.sort((a, b) => b.price - a.price);
     }
-  };
 
-  useEffect(() => {
-    applyFilter();
-  }, [category, subCategory]);
-
-  useEffect(() => {
-    sortProduct();
-  }, [sortType]);
+    return productsCopy;
+  }, [products, category, subCategory, sortType]);
 
   return (
     <div className="flex flex-col sm:flex-row gap-1 sm:gap-10 pt-10 border-t">
