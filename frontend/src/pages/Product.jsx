@@ -1,5 +1,4 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable no-unused-vars */
 import { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { ShopContext } from "../context/ShopContext";
@@ -8,7 +7,7 @@ import RelatedProducts from "../components/RelatedProducts";
 
 const Product = () => {
   const { productId } = useParams();
-  const { products, currency } = useContext(ShopContext);
+  const { products, currency, addToCart } = useContext(ShopContext);
   const [productData, setProductData] = useState(false);
   const [image, setImage] = useState("");
   const [size, setSize] = useState("");
@@ -54,11 +53,11 @@ const Product = () => {
         <div className="flex-1">
           <h1 className="font-medium text-2xl mt-2">{productData.name}</h1>
           <div className="flex items-center gap-1 mt-2">
-            <img alt="icon" class="w-3 5" src={assets.star_icon} />
-            <img alt="icon" class="w-3 5" src={assets.star_icon} />
-            <img alt="icon" class="w-3 5" src={assets.star_icon} />
-            <img alt="icon" class="w-3 5" src={assets.star_icon} />
-            <img alt="icon" class="w-3 5" src={assets.star_dull_icon} />
+            <img alt="icon" className="w-3 5" src={assets.star_icon} />
+            <img alt="icon" className="w-3 5" src={assets.star_icon} />
+            <img alt="icon" className="w-3 5" src={assets.star_icon} />
+            <img alt="icon" className="w-3 5" src={assets.star_icon} />
+            <img alt="icon" className="w-3 5" src={assets.star_dull_icon} />
             <p className="pl-2">(122)</p>
           </div>
           <p className="mt-5 text-3xl font-medium">
@@ -68,9 +67,9 @@ const Product = () => {
           <p className="mt-5 text-gray-500 md:w-4/5">
             {productData.description}
           </p>
-          <div class="flex flex-col gap-4 my-8">
+          <div className="flex flex-col gap-4 my-8">
             <p>Select Size</p>
-            <div class="flex gap-2">
+            <div className="flex gap-2">
               {productData.sizes.map((item, index) => (
                 <button
                   onClick={() => setSize(item)}
@@ -83,7 +82,10 @@ const Product = () => {
             </div>
           </div>
 
-          <button className="bg-black text-white px-8 py-3 text-sm active:bg-gray-700">
+          <button
+            onClick={() => addToCart(productData._id, size)}
+            className="bg-black text-white px-8 py-3 text-sm active:bg-gray-700"
+          >
             ADD TO CART
           </button>
           <hr className="mt-8 sm:w-4/5" />
@@ -98,11 +100,11 @@ const Product = () => {
       {/* Description & Review Section */}
       <div className="mt-20">
         <div className="flex">
-          <b class="border px-5 py-3 text-sm">Description</b>
-          <p class="border px-5 py-3 text-sm">Reviews (122)</p>
+          <b className="border px-5 py-3 text-sm">Description</b>
+          <p className="border px-5 py-3 text-sm">Reviews (122)</p>
         </div>
 
-        <div class="flex flex-col gap-4 border px-6 py-6 text-sm text-gray-500">
+        <div className="flex flex-col gap-4 border px-6 py-6 text-sm text-gray-500">
           <p>
             Refresh your wardrobe with apparel designed for comfort, quality,
             and everyday style. From timeless essentials to standout pieces,
