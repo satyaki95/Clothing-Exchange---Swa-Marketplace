@@ -18,14 +18,14 @@ const PlaceOrder = () => {
 
         <div className="flex gap-3">
           <input
-            required=""
+            required
             className="border border-gray-300 rounded py-1.5 px-3.5 w-full"
             placeholder="First name"
             type="text"
             name="firstName"
           />
           <input
-            required=""
+            required
             className="border border-gray-300 rounded py-1.5 px-3.5 w-full"
             placeholder="Last name"
             type="text"
@@ -34,14 +34,14 @@ const PlaceOrder = () => {
         </div>
 
         <input
-          required=""
+          required
           className="border border-gray-300 rounded py-1.5 px-3.5 w-full"
           placeholder="Email address"
           type="email"
           name="email"
         />
         <input
-          required=""
+          required
           className="border border-gray-300 rounded py-1.5 px-3.5 w-full"
           placeholder="Street"
           type="text"
@@ -50,14 +50,14 @@ const PlaceOrder = () => {
 
         <div className="flex gap-3">
           <input
-            required=""
+            required
             className="border border-gray-300 rounded py-1.5 px-3.5 w-full"
             placeholder="City"
             type="text"
             name="city"
           />
           <input
-            required=""
+            required
             className="border border-gray-300 rounded py-1.5 px-3.5 w-full"
             placeholder="State"
             type="text"
@@ -66,14 +66,14 @@ const PlaceOrder = () => {
         </div>
         <div className="flex gap-3">
           <input
-            required=""
+            required
             className="border border-gray-300 rounded py-1.5 px-3.5 w-full"
             placeholder="Zipcode"
             type="number"
             name="zipcode"
           />
           <input
-            required=""
+            required
             className="border border-gray-300 rounded py-1.5 px-3.5 w-full"
             placeholder="Country"
             type="text"
@@ -81,7 +81,7 @@ const PlaceOrder = () => {
           />
         </div>
         <input
-          required=""
+          required
           className="border border-gray-300 rounded py-1.5 px-3.5 w-full"
           placeholder="Phone"
           type="number"
