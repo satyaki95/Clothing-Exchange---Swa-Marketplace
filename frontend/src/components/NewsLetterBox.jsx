@@ -1,17 +1,12 @@
-const NewsLetterBox = () => {
+const NewsLetterBox = ({ text1, text2 }) => {
   const onSubmitHandler = (e) => {
     e.preventDefault();
   };
 
   return (
     <div className="text-center">
-      <p className="text-2xl font-medium text-gray-800">
-        Subscribe & and get 20% off
-      </p>
-      <p className="text-gray-400 mt-3">
-        Join our community for fresh swaps, style updates, and exclusive offers
-        on pre-loved finds.
-      </p>
+      <p className="text-2xl font-medium text-gray-800">{text1}</p>
+      <p className="text-gray-400 mt-3">{text2}</p>
       <form
         onSubmit={onSubmitHandler}
         className="w-full sm:w-1/2 flex items-center gap-3 mx-auto my-6 border pl-3"

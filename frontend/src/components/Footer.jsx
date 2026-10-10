@@ -7,8 +7,8 @@ const Footer = () => {
         <div>
           <img className="mb-5 w-32" alt="logo" src={assets.logo} />
           <p className="w-full md:w-2/3 text-gray-600">
-            Discover fresh, pre-loved fashion and smart swaps designed to help
-            you refresh your wardrobe while giving quality pieces a second life.
+            Buy and sell used clothing in a community marketplace that keeps
+            quality pieces in use and gives them a second life.
           </p>
         </div>
         <div>

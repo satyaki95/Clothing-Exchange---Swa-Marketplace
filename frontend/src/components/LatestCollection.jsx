@@ -16,10 +16,10 @@ const LatestCollection = () => {
   return (
     <div className="my-10">
       <div className="text-center py-8 text-3xl">
-        <Title text1={"LATEST"} text2={"COLLECTIONS"} />
+        <Title text1={"LATEST"} text2={"PRE-OWNED FINDS"} />
         <p className="w-3/4 m-auto text-xs sm:text-sm md:text-base text-gray-600">
-          Explore stylish pre-loved pieces that help you refresh your wardrobe,
-          swap smart, and give quality clothing a second life.
+          Browse used clothing from the community and find your next favorite
+          piece without buying new.
         </p>
       </div>
 

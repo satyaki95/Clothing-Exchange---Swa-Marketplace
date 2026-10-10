@@ -90,7 +90,7 @@ const Product = () => {
           </button>
           <hr className="mt-8 sm:w-4/5" />
           <div className="text-sm text-gray-500 mt-5 flex flex-col gap-1">
-            <p>100% Original product.</p>
+            <p>Pre-owned item; review its description before you buy.</p>
             <p>Cash on delivery is available on this product.</p>
             <p>Easy return and exchange policy within 7 days.</p>
           </div>
@@ -106,14 +106,13 @@ const Product = () => {
 
         <div className="flex flex-col gap-4 border px-6 py-6 text-sm text-gray-500">
           <p>
-            Refresh your wardrobe with apparel designed for comfort, quality,
-            and everyday style. From timeless essentials to standout pieces,
-            find clothing that fits your look and makes you feel great.
+            Every item on FOREVER is pre-owned. Browse used clothing from the
+            community to find comfortable, quality pieces for your style.
           </p>
           <p>
-            Explore each item's details, choose the size that works for you, and
-            find your next favorite piece. Check the product information for
-            fabric, fit, and care details before adding it to your collection.
+            Check each item's description, size, fabric, fit, and care details
+            before you buy. When you sell through FOREVER, your used clothes can
+            become someone else's next favorite find.
           </p>
         </div>
       </div>

@@ -17,10 +17,10 @@ const BestSeller = () => {
   return (
     <div className="my-10">
       <div className="text-center text-3xl py-8">
-        <Title text1={"BEST"} text2={"SELLERS"} />
+        <Title text1={"POPULAR"} text2={"USED FINDS"} />
         <p className="w-3/4 m-auto text-xs sm:text-sm md:text-base text-gray-600">
-          Shop the most loved pieces from our community, where quality, style,
-          and smart swaps come together in every outfit.
+          Discover pre-owned clothing picked from the community marketplace.
+          Every purchase gives used clothes another life.
         </p>
       </div>
 
