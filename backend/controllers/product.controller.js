@@ -9,7 +9,7 @@ const addProduct = async (req, res) => {
       description,
       price,
       category,
-      subcategory,
+      subCategory,
       sizes,
       bestSeller,
     } = req.body;
@@ -34,19 +34,24 @@ const addProduct = async (req, res) => {
       }),
     );
 
-    console.log(imageUrls);
-
-    const product = await productModel.create({
+    const productData = {
       name,
       description,
-      price,
       category,
-      subcategory,
-      sizes,
-      bestSeller,
-      imageUrls,
-    });
-    res.status(201).json(product);
+      subCategory,
+      price: Number(price),
+      bestSeller: bestSeller === "true" ? true : false,
+      sizes: JSON.parse(sizes),
+      image: imageUrls,
+      date: new Date(),
+    };
+
+    const product = new productModel(productData);
+    await product.save();
+
+    res
+      .status(201)
+      .json({ success: true, message: "Product added successfully" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -56,7 +61,7 @@ const addProduct = async (req, res) => {
 const listProducts = async (req, res) => {
   try {
     const products = await productModel.find();
-    res.status(200).json(products);
+    res.status(200).json({ success: true, data: products });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
