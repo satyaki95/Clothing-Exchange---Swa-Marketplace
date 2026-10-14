@@ -112,7 +112,7 @@ const adminLogin = async (req, res) => {
       });
     }
 
-    const token = createToken(email + password); // Using a fixed ID for the admin user
+    const token = jwt.sign(email + password, process.env.JWT_SECRET);
 
     res.status(200).json({
       success: true,
