@@ -60,8 +60,8 @@ const addProduct = async (req, res) => {
 // function for list product
 const listProducts = async (req, res) => {
   try {
-    const products = await productModel.find();
-    res.status(200).json({ success: true, data: products });
+    const products = await productModel.find({});
+    res.status(200).json({ success: true, products });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -70,8 +70,9 @@ const listProducts = async (req, res) => {
 // function for removing product
 const removeProduct = async (req, res) => {
   try {
-    const { id } = req.params;
-    const product = await productModel.findByIdAndDelete(id);
+    const id = req.body.id;
+
+    await productModel.findByIdAndDelete(id);
     res
       .status(200)
       .json({ success: true, message: "Product removed successfully" });
@@ -83,9 +84,9 @@ const removeProduct = async (req, res) => {
 // function for single product info
 const singleProduct = async (req, res) => {
   try {
-    const { id } = req.params;
-    const product = await productModel.findById(id);
-    res.status(200).json({ success: true, data: product });
+    const { productId } = req.body;
+    const product = await productModel.findById(productId);
+    res.status(200).json({ success: true, product });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
