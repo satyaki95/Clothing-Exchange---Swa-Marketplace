@@ -8,9 +8,7 @@ const adminAuth = async (req, res, next) => {
       throw new Error("No token provided");
     }
 
-    let token_decode = jwt.verify(token, process.env.JWT_SECRET);
-
-    token_decode = token_decode.id;
+    const token_decode = jwt.verify(token, process.env.JWT_SECRET);
 
     if (token_decode !== process.env.ADMIN_EMAIL + process.env.ADMIN_PASSWORD) {
       throw new Error("Invalid admin credentials");
