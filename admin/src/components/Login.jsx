@@ -18,11 +18,14 @@ const Login = ({ setToken }) => {
 
       if (response.data.success) {
         setToken(response.data.token);
+        toast.success(response.data.message || "Admin logged in successfully.");
       } else {
-        toast.error(response.data.message);
+        toast.error(response.data.message || "Unable to log in.");
       }
     } catch (error) {
-      toast.error(error.message);
+      toast.error(
+        error.response?.data?.message || "Unable to log in. Please try again.",
+      );
     }
   };
 

@@ -53,7 +53,8 @@ const addProduct = async (req, res) => {
       .status(201)
       .json({ success: true, message: "Product added successfully" });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Failed to add product:", error);
+    res.status(500).json({ success: false, message: "Unable to add product. Please try again." });
   }
 };
 
@@ -63,7 +64,8 @@ const listProducts = async (req, res) => {
     const products = await productModel.find({});
     res.status(200).json({ success: true, products });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Failed to load products:", error);
+    res.status(500).json({ success: false, message: "Unable to load products. Please try again." });
   }
 };
 
@@ -77,7 +79,8 @@ const removeProduct = async (req, res) => {
       .status(200)
       .json({ success: true, message: "Product removed successfully" });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Failed to remove product:", error);
+    res.status(500).json({ success: false, message: "Unable to remove product. Please try again." });
   }
 };
 
@@ -88,7 +91,8 @@ const singleProduct = async (req, res) => {
     const product = await productModel.findById(productId);
     res.status(200).json({ success: true, product });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Failed to load product:", error);
+    res.status(500).json({ success: false, message: "Unable to load product. Please try again." });
   }
 };
 

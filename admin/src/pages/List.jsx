@@ -18,8 +18,9 @@ const List = ({ token }) => {
         toast.error(response.data.message);
       }
     } catch (error) {
-      console.error("Error fetching list:", error);
-      toast.error(error.message);
+      toast.error(
+        error.response?.data?.message || "Unable to load products. Please try again.",
+      );
     }
   };
 
@@ -38,8 +39,9 @@ const List = ({ token }) => {
         toast.error(response.data.message);
       }
     } catch (error) {
-      console.error("Error deleting product:", error);
-      toast.error(error.message);
+      toast.error(
+        error.response?.data?.message || "Unable to remove product. Please try again.",
+      );
     }
   };
 

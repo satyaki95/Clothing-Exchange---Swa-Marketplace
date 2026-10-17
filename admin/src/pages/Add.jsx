@@ -72,8 +72,9 @@ const Add = ({ token }) => {
         toast.error(response.data.message);
       }
     } catch (error) {
-      toast.error(error.message);
-      console.log(error);
+      toast.error(
+        error.response?.data?.message || "Unable to add product. Please try again.",
+      );
     }
   };
 

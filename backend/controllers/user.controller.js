@@ -38,9 +38,10 @@ const loginUser = async (req, res) => {
       token,
     });
   } catch (error) {
+    console.error("Failed to log in user:", error);
     res.status(500).json({
       success: false,
-      message: error.message || "Error logging in user",
+      message: "Unable to log in. Please try again.",
     });
   }
 };
@@ -89,9 +90,10 @@ const registerUser = async (req, res) => {
       token,
     });
   } catch (error) {
+    console.error("Failed to register user:", error);
     res.status(500).json({
       success: false,
-      message: error.message || "Error registering user",
+      message: "Unable to create your account. Please try again.",
     });
   }
 };
@@ -120,9 +122,10 @@ const adminLogin = async (req, res) => {
       token,
     });
   } catch (error) {
+    console.error("Failed to log in admin:", error);
     res.status(500).json({
       success: false,
-      message: error.message || "Error logging in admin",
+      message: "Unable to log in. Please try again.",
     });
   }
 };
