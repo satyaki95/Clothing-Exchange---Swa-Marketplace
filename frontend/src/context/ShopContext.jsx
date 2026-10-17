@@ -96,13 +96,20 @@ const ShopContextProvider = (props) => {
       }
     } catch (error) {
       toast.error(
-        error.response?.data?.message || "Unable to load products. Please try again.",
+        error.response?.data?.message ||
+          "Unable to load products. Please try again.",
       );
     }
   };
 
   useEffect(() => {
     getProductsData();
+  }, []);
+
+  useEffect(() => {
+    if (!token && localStorage.getItem("token")) {
+      setToken(localStorage.getItem("token"));
+    }
   }, []);
 
   const value = {

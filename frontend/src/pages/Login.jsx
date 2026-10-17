@@ -1,11 +1,12 @@
-import { useContext, useState } from "react";
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useContext, useState, useEffect } from "react";
 import { ShopContext } from "../context/ShopContext";
 import { toast } from "react-toastify";
 import axios from "axios";
 
 const Login = () => {
   const [currentState, setCurrentState] = useState("Login");
-  const { setToken, backendUrl } = useContext(ShopContext);
+  const { setToken, token, navigate, backendUrl } = useContext(ShopContext);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -24,7 +25,9 @@ const Login = () => {
         if (response.data.success) {
           setToken(response.data.token);
           localStorage.setItem("token", response.data.token);
-          toast.success(response.data.message || "Account created successfully.");
+          toast.success(
+            response.data.message || "Account created successfully.",
+          );
         } else {
           toast.error(response.data.message);
         }
@@ -44,10 +47,17 @@ const Login = () => {
       }
     } catch (error) {
       toast.error(
-        error.response?.data?.message || "Unable to complete your request. Please try again.",
+        error.response?.data?.message ||
+          "Unable to complete your request. Please try again.",
       );
     }
   };
+
+  useEffect(() => {
+    if (token) {
+      navigate("/");
+    }
+  }, [token]);
 
   return (
     <form
