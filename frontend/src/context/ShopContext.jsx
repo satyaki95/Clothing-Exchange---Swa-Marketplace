@@ -18,7 +18,7 @@ const ShopContextProvider = (props) => {
   const [showSearch, setShowSearch] = useState(false);
   const [cartItems, setCartItems] = useState({});
   const [products, setProducts] = useState([]);
-  const [token, setToken] = useState("");
+  const [token, setToken] = useState(() => localStorage.getItem("token") || "");
   const navigate = useNavigate();
 
   const addToCart = async (itemId, size) => {
@@ -41,6 +41,27 @@ const ShopContextProvider = (props) => {
     }
 
     setCartItems(cartData);
+
+    if (token) {
+      try {
+        await axios.post(
+          backendUrl + "/api/cart/add",
+          { itemId, size },
+          { headers: { token } },
+        );
+      } catch (error) {
+        if (error.response?.status === 401) {
+          localStorage.removeItem("token");
+          setToken("");
+        }
+        toast.error(
+          error.response?.data?.message ||
+            (error.response?.status === 401
+              ? "Your session has expired. Please sign in again."
+              : "Unable to add this item to your cart. Please try again."),
+        );
+      }
+    }
   };
 
   const getCartCount = () => {
@@ -65,6 +86,21 @@ const ShopContextProvider = (props) => {
     cartData[itemId][size] = quantity;
 
     setCartItems(cartData);
+
+    if (token) {
+      try {
+        await axios.post(
+          backendUrl + "/api/cart/update",
+          { itemId, size, quantity },
+          { headers: { token } },
+        );
+      } catch (error) {
+        if (error.response?.status === 401) {
+          localStorage.removeItem("token");
+          setToken("");
+        }
+      }
+    }
   };
 
   const getCartAmount = () => {
@@ -104,12 +140,6 @@ const ShopContextProvider = (props) => {
 
   useEffect(() => {
     getProductsData();
-  }, []);
-
-  useEffect(() => {
-    if (!token && localStorage.getItem("token")) {
-      setToken(localStorage.getItem("token"));
-    }
   }, []);
 
   const value = {

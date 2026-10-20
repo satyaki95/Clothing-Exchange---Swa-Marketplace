@@ -1,10 +1,15 @@
 import jwt from "jsonwebtoken";
 
 const authUser = async (req, res, next) => {
-  const { token } = req.headers;
+  const token = req.get("token");
 
   if (!token) {
-    return res.status(401).json({ success: false, message: "Unauthorized" });
+    return res
+      .status(401)
+      .json({
+        success: false,
+        message: "Authentication required. Please sign in.",
+      });
   }
 
   try {
