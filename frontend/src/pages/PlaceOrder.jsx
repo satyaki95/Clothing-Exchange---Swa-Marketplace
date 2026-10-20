@@ -6,10 +6,78 @@ import { ShopContext } from "../context/ShopContext";
 
 const PlaceOrder = () => {
   const [method, setMethod] = useState("cod");
-  const { navigate } = useContext(ShopContext);
+  const {
+    navigate,
+    backendUrl,
+    token,
+    cartItems,
+    getCartAmount,
+    delivery_fee,
+    products,
+  } = useContext(ShopContext);
+
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    street: "",
+    city: "",
+    state: "",
+    zipcode: "",
+    country: "",
+    phone: "",
+  });
+
+  const onChangeHandler = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const onSubmitHandler = async (e) => {
+    e.preventDefault();
+    const address = {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      street: formData.street,
+      city: formData.city,
+      state: formData.state,
+      zipcode: formData.zipcode,
+      country: formData.country,
+      phone: formData.phone,
+    };
+
+    if (method === "cod") {
+      try {
+        let orderItems = [];
+
+        for (const items in cartItems) {
+          for (const item in cartItems[items]) {
+            if (cartItems[items][item] > 0) {
+              const itemInfo = structuredClone(
+                products.find((product) => product._id === items),
+              );
+
+              if (itemInfo) {
+                itemInfo.size = item;
+                itemInfo.quantity = cartItems[items][item];
+                orderItems.push(itemInfo);
+              }
+            }
+          }
+        }
+
+        console.log(orderItems);
+      } catch (error) {
+        console.error("Error placing order:", error);
+      }
+    }
+  };
 
   return (
-    <form className="flex flex-col sm:flex-row justify-between gap-4 pt-5 sm:pt-14 min-h-[80vh] border-t">
+    <form
+      onSubmit={onSubmitHandler}
+      className="flex flex-col sm:flex-row justify-between gap-4 pt-5 sm:pt-14 min-h-[80vh] border-t"
+    >
       {/* left side */}
       <div className="flex flex-col gap-4 w-full sm:max-w-120">
         <div className="text-xl sm:text-2xl my-3">
@@ -23,6 +91,8 @@ const PlaceOrder = () => {
             placeholder="First name"
             type="text"
             name="firstName"
+            value={formData.firstName}
+            onChange={onChangeHandler}
           />
           <input
             required
@@ -30,6 +100,8 @@ const PlaceOrder = () => {
             placeholder="Last name"
             type="text"
             name="lastName"
+            value={formData.lastName}
+            onChange={onChangeHandler}
           />
         </div>
 
@@ -39,6 +111,8 @@ const PlaceOrder = () => {
           placeholder="Email address"
           type="email"
           name="email"
+          value={formData.email}
+          onChange={onChangeHandler}
         />
         <input
           required
@@ -46,6 +120,8 @@ const PlaceOrder = () => {
           placeholder="Street"
           type="text"
           name="street"
+          value={formData.street}
+          onChange={onChangeHandler}
         />
 
         <div className="flex gap-3">
@@ -55,6 +131,8 @@ const PlaceOrder = () => {
             placeholder="City"
             type="text"
             name="city"
+            value={formData.city}
+            onChange={onChangeHandler}
           />
           <input
             required
@@ -62,6 +140,8 @@ const PlaceOrder = () => {
             placeholder="State"
             type="text"
             name="state"
+            value={formData.state}
+            onChange={onChangeHandler}
           />
         </div>
         <div className="flex gap-3">
@@ -71,6 +151,8 @@ const PlaceOrder = () => {
             placeholder="Zipcode"
             type="number"
             name="zipcode"
+            value={formData.zipcode}
+            onChange={onChangeHandler}
           />
           <input
             required
@@ -78,6 +160,8 @@ const PlaceOrder = () => {
             placeholder="Country"
             type="text"
             name="country"
+            value={formData.country}
+            onChange={onChangeHandler}
           />
         </div>
         <input
@@ -86,6 +170,8 @@ const PlaceOrder = () => {
           placeholder="Phone"
           type="number"
           name="phone"
+          value={formData.phone}
+          onChange={onChangeHandler}
         />
       </div>
 
@@ -139,7 +225,6 @@ const PlaceOrder = () => {
 
           <div className="w-full text-end mt-8">
             <button
-              onClick={() => navigate("/orders")}
               type="submit"
               className="bg-black text-white px-16 py-3 text-sm"
             >
