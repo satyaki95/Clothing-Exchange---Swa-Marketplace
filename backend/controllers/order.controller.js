@@ -1,4 +1,5 @@
 import orderModel from "../models/order.model.js";
+import userModel from "../models/user.model.js";
 
 // Placing orders using COD Method
 const placeOrderCod = async (req, res) => {
@@ -25,6 +26,7 @@ const placeOrderCod = async (req, res) => {
       order: newOrder,
     });
   } catch (error) {
+    console.error("Error placing COD order:", error);
     return res
       .status(500)
       .json({ success: false, message: "Internal Server Error" });
@@ -64,6 +66,18 @@ const getAllOrders = async (req, res) => {
 // User Order Data for Frontend
 const getUserOrders = async (req, res) => {
   try {
+    const { userId } = req.body;
+
+    const orders = await orderModel
+      .find({ userId })
+      .populate("items.productId")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      message: "User orders fetched successfully",
+      orders,
+    });
   } catch (error) {
     return res
       .status(500)

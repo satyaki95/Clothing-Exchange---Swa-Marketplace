@@ -1,8 +1,12 @@
+/* eslint-disable no-case-declarations */
+/* eslint-disable no-unused-vars */
 import { useContext, useState } from "react";
+import { toast } from "react-toastify";
 import { assets } from "../assets/assets";
 import CartTotal from "../components/CartTotal";
 import Title from "../components/Title";
 import { ShopContext } from "../context/ShopContext";
+import axios from "axios";
 
 const PlaceOrder = () => {
   const [method, setMethod] = useState("cod");
@@ -11,6 +15,7 @@ const PlaceOrder = () => {
     backendUrl,
     token,
     cartItems,
+    setCartItems,
     getCartAmount,
     delivery_fee,
     products,
@@ -53,22 +58,55 @@ const PlaceOrder = () => {
         for (const items in cartItems) {
           for (const item in cartItems[items]) {
             if (cartItems[items][item] > 0) {
-              const itemInfo = structuredClone(
-                products.find((product) => product._id === items),
+              const itemInfo = products.find(
+                (product) => product._id === items,
               );
 
               if (itemInfo) {
-                itemInfo.size = item;
-                itemInfo.quantity = cartItems[items][item];
-                orderItems.push(itemInfo);
+                orderItems.push({
+                  productId: itemInfo._id,
+                  size: item,
+                  quantity: cartItems[items][item],
+                });
               }
             }
           }
         }
 
-        console.log(orderItems);
+        const orderData = {
+          address: formData,
+          items: orderItems,
+          amount: getCartAmount() + delivery_fee,
+        };
+
+        switch (method) {
+          // API Calls for COD
+          case "cod":
+            const response = await axios.post(
+              `${backendUrl}/api/order/place`,
+              orderData,
+              { headers: { token } },
+            );
+
+            if (response.data.success) {
+              setCartItems({});
+              navigate("/orders");
+            } else {
+              toast.error(
+                response.data.message ||
+                  "Failed to place order. Please try again.",
+              );
+            }
+            break;
+
+          default:
+            break;
+        }
       } catch (error) {
         console.error("Error placing order:", error);
+        toast.error(
+          error.message || "Failed to place order. Please try again.",
+        );
       }
     }
   };
