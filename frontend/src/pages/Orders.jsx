@@ -60,9 +60,9 @@ const Orders = () => {
                         {item.productId.name}
                       </p>
                       <div className="flex items-center gap-3 mt-1 text-base text-gray-700">
-                        <p className="text-lg">
+                        <p>
                           {currency}
-                          {item.productId.price}
+                          {item.productId.price * item.quantity}
                         </p>
                         <p>Quantity: {item.quantity}</p>
                         <p>Size: {item.size}</p>
@@ -70,7 +70,7 @@ const Orders = () => {
                       <p className="mt-1">
                         Date:{" "}
                         <span className="text-gray-400">
-                          {new Date(order.createdAt).toLocaleDateString()}
+                          {new Date(order.createdAt).toDateString()}
                         </span>
                       </p>
                       <p className="mt-1">
@@ -87,7 +87,10 @@ const Orders = () => {
                       <p className="min-w-2 h-2 rounded-full bg-green-500"></p>
                       <p className="text-sm md:text-base">{order.status}</p>
                     </div>
-                    <button className="border px-4 py-2 text-sm font-medium rounded-sm">
+                    <button
+                      onClick={loadOrderData}
+                      className="border px-4 py-2 text-sm font-medium rounded-sm"
+                    >
                       Track Order
                     </button>
                   </div>
