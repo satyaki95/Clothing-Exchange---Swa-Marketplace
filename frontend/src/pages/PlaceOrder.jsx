@@ -1,5 +1,3 @@
-/* eslint-disable no-case-declarations */
-/* eslint-disable no-unused-vars */
 import { useContext, useState } from "react";
 import { toast } from "react-toastify";
 import { assets } from "../assets/assets";
@@ -51,63 +49,75 @@ const PlaceOrder = () => {
       phone: formData.phone,
     };
 
-    if (method === "cod") {
-      try {
-        let orderItems = [];
+    const orderItems = [];
 
-        for (const items in cartItems) {
-          for (const item in cartItems[items]) {
-            if (cartItems[items][item] > 0) {
-              const itemInfo = products.find(
-                (product) => product._id === items,
-              );
+    for (const productId in cartItems) {
+      for (const size in cartItems[productId]) {
+        if (cartItems[productId][size] > 0) {
+          const product = products.find((item) => item._id === productId);
 
-              if (itemInfo) {
-                orderItems.push({
-                  productId: itemInfo._id,
-                  size: item,
-                  quantity: cartItems[items][item],
-                });
-              }
-            }
+          if (product) {
+            orderItems.push({
+              productId: product._id,
+              size,
+              quantity: cartItems[productId][size],
+            });
           }
         }
-
-        const orderData = {
-          address: formData,
-          items: orderItems,
-          amount: getCartAmount() + delivery_fee,
-        };
-
-        switch (method) {
-          // API Calls for COD
-          case "cod":
-            const response = await axios.post(
-              `${backendUrl}/api/order/place`,
-              orderData,
-              { headers: { token } },
-            );
-
-            if (response.data.success) {
-              setCartItems({});
-              navigate("/orders");
-            } else {
-              toast.error(
-                response.data.message ||
-                  "Failed to place order. Please try again.",
-              );
-            }
-            break;
-
-          default:
-            break;
-        }
-      } catch (error) {
-        console.error("Error placing order:", error);
-        toast.error(
-          error.message || "Failed to place order. Please try again.",
-        );
       }
+    }
+
+    if (orderItems.length === 0) {
+      toast.error("Your cart is empty.");
+      return;
+    }
+
+    const orderData = {
+      address,
+      items: orderItems,
+      amount: getCartAmount() + delivery_fee,
+    };
+
+    try {
+      if (method === "cod") {
+        const response = await axios.post(
+          `${backendUrl}/api/order/place`,
+          orderData,
+          { headers: { token } },
+        );
+
+        if (response.data.success) {
+          setCartItems({});
+          navigate("/orders");
+        } else {
+          toast.error(
+            response.data.message ||
+              "Failed to place order. Please try again.",
+          );
+        }
+      } else if (method === "stripe") {
+        const response = await axios.post(
+          `${backendUrl}/api/order/stripe`,
+          orderData,
+          { headers: { token } },
+        );
+
+        if (response.data.success && response.data.checkoutUrl) {
+          window.location.assign(response.data.checkoutUrl);
+        } else {
+          toast.error(
+            response.data.message ||
+              "Failed to start Stripe checkout. Please try again.",
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Error placing order:", error);
+      toast.error(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to place order. Please try again.",
+      );
     }
   };
 

@@ -19,7 +19,9 @@ const addToCart = async (req, res) => {
       cartData[itemId][size] = 1;
     }
 
-    await userModel.findByIdAndUpdate(userId, { cartData }, { new: true });
+    await userModel.findByIdAndUpdate(userId, { cartData }, {
+      returnDocument: "after",
+    });
 
     res
       .status(200)
@@ -51,7 +53,9 @@ const updateCart = async (req, res) => {
       }
     }
 
-    await userModel.findByIdAndUpdate(userId, { cartData }, { new: true });
+    await userModel.findByIdAndUpdate(userId, { cartData }, {
+      returnDocument: "after",
+    });
 
     res
       .status(200)
