@@ -16,7 +16,7 @@ const orderRouter = express.Router();
 orderRouter.post("/list", adminAuth, getAllOrders);
 
 // Update order status
-orderRouter.post("/status", updateOrderStatus);
+orderRouter.post("/status", adminAuth, updateOrderStatus);
 
 // Placing orders using COD Method
 orderRouter.post("/place", authUser, placeOrderCod);
