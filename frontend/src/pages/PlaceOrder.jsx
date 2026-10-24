@@ -6,6 +6,20 @@ import Title from "../components/Title";
 import { ShopContext } from "../context/ShopContext";
 import axios from "axios";
 
+const loadRazorpayScript = () =>
+  new Promise((resolve, reject) => {
+    if (window.Razorpay) {
+      resolve();
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = resolve;
+    script.onerror = () => reject(new Error("Unable to load Razorpay checkout."));
+    document.body.appendChild(script);
+  });
+
 const PlaceOrder = () => {
   const [method, setMethod] = useState("cod");
   const {
@@ -91,8 +105,7 @@ const PlaceOrder = () => {
           navigate("/orders");
         } else {
           toast.error(
-            response.data.message ||
-              "Failed to place order. Please try again.",
+            response.data.message || "Failed to place order. Please try again.",
           );
         }
       } else if (method === "stripe") {
@@ -110,6 +123,75 @@ const PlaceOrder = () => {
               "Failed to start Stripe checkout. Please try again.",
           );
         }
+      } else if (method === "razorpay") {
+        await loadRazorpayScript();
+        const response = await axios.post(
+          `${backendUrl}/api/order/razorpay`,
+          orderData,
+          { headers: { token } },
+        );
+
+        if (
+          !response.data.success ||
+          !response.data.keyId ||
+          !response.data.razorpayOrder
+        ) {
+          toast.error(
+            response.data.message ||
+              "Failed to start Razorpay checkout. Please try again.",
+          );
+          return;
+        }
+
+        const { keyId, razorpayOrder } = response.data;
+        const checkout = new window.Razorpay({
+          key: keyId,
+          amount: razorpayOrder.amount,
+          currency: razorpayOrder.currency,
+          name: "Swa Marketplace",
+          description: "Order payment",
+          order_id: razorpayOrder.id,
+          prefill: {
+            name: `${formData.firstName} ${formData.lastName}`.trim(),
+            email: formData.email,
+            contact: formData.phone,
+          },
+          handler: async (paymentResponse) => {
+            try {
+              const verificationResponse = await axios.post(
+                `${backendUrl}/api/order/razorpay/verify`,
+                paymentResponse,
+                { headers: { token } },
+              );
+
+              if (verificationResponse.data.success) {
+                setCartItems({});
+                toast.success("Payment successful.");
+                navigate("/orders");
+              } else {
+                toast.error(
+                  verificationResponse.data.message ||
+                    "Unable to verify Razorpay payment.",
+                );
+              }
+            } catch (error) {
+              console.error(
+                "Error verifying Razorpay payment:",
+                error.response?.data || error,
+              );
+              toast.error(
+                error.response?.data?.message ||
+                  "Unable to verify Razorpay payment. Please contact support if you were charged.",
+              );
+            }
+          },
+          modal: {
+            ondismiss: () => toast.info("Razorpay payment was cancelled."),
+          },
+          theme: { color: "#000000" },
+        });
+
+        checkout.open();
       }
     } catch (error) {
       console.error("Error placing order:", error);

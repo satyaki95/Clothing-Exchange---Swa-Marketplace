@@ -4,6 +4,7 @@ import {
   placeOrderStripe,
   verifyStripePayment,
   placeOrderRazorpay,
+  verifyRazorpayPayment,
   getAllOrders,
   getUserOrders,
   updateOrderStatus,
@@ -28,6 +29,7 @@ orderRouter.post("/stripe/verify", authUser, verifyStripePayment);
 
 // Placing orders using Razorpay Method
 orderRouter.post("/razorpay", authUser, placeOrderRazorpay);
+orderRouter.post("/razorpay/verify", authUser, verifyRazorpayPayment);
 
 // Get user orders (Frontend)
 orderRouter.post("/user-orders", authUser, getUserOrders);
