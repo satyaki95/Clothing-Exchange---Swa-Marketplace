@@ -1,14 +1,16 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable react-hooks/set-state-in-effect */
 import { useContext, useState, useEffect } from "react";
 import { ShopContext } from "../context/ShopContext";
 import Title from "../components/Title";
 import axios from "axios";
+import { useSearchParams } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const Orders = () => {
-  const { backendUrl, token, currency } = useContext(ShopContext);
+  const { backendUrl, token, currency, setCartItems } = useContext(ShopContext);
 
   const [orderData, setOrderData] = useState([]);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const loadOrderData = async () => {
     try {
@@ -30,8 +32,37 @@ const Orders = () => {
   };
 
   useEffect(() => {
-    loadOrderData();
-  }, [token]);
+    const sessionId = searchParams.get("session_id");
+    if (!token) return;
+
+    const loadOrdersAfterPayment = async () => {
+      if (sessionId) {
+        try {
+          const response = await axios.post(
+            `${backendUrl}/api/order/stripe/verify`,
+            { sessionId },
+            { headers: { token } },
+          );
+
+          if (response.data.success) {
+            setCartItems({});
+            toast.success("Payment successful. Your cart has been cleared.");
+            setSearchParams({}, { replace: true });
+          }
+        } catch (error) {
+          console.error("Error verifying Stripe payment:", error);
+          toast.error(
+            error.response?.data?.message ||
+              "Unable to verify your payment. Please try again.",
+          );
+        }
+      }
+
+      await loadOrderData();
+    };
+
+    loadOrdersAfterPayment();
+  }, [token, searchParams]);
 
   return (
     <div className="border-t pt-16">

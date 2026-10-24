@@ -48,6 +48,9 @@ const orderSchema = new mongoose.Schema(
       default: false,
       required: true,
     },
+    stripeSessionId: {
+      type: String,
+    },
   },
   { timestamps: true },
 );

@@ -101,7 +101,7 @@ const placeOrderStripe = async (req, res) => {
     const session = await stripe.checkout.sessions.create({
       line_items: lineItems,
       mode: "payment",
-      success_url: `${origin}/orders?success=true`,
+      success_url: `${origin}/orders?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/place-order?canceled=true`,
     });
 
@@ -116,6 +116,7 @@ const placeOrderStripe = async (req, res) => {
       paymentMethod: "stripe",
       payment: false,
       shippingAddress: address,
+      stripeSessionId: session.id,
     });
     await newOrder.save();
 
@@ -130,6 +131,53 @@ const placeOrderStripe = async (req, res) => {
     return res
       .status(500)
       .json({ success: false, message: "Unable to start Stripe checkout." });
+  }
+};
+
+const verifyStripePayment = async (req, res) => {
+  try {
+    const { userId, sessionId } = req.body;
+    if (!sessionId) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Stripe checkout session is required.",
+        });
+    }
+
+    const order = await orderModel.findOne({
+      userId,
+      stripeSessionId: sessionId,
+    });
+    if (!order) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found for this checkout." });
+    }
+
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    if (session.payment_status !== "paid") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Stripe payment has not completed." });
+    }
+
+    if (!order.payment) {
+      order.payment = true;
+      await order.save();
+    }
+    await userModel.findByIdAndUpdate(userId, { cartData: {} });
+
+    return res.status(200).json({
+      success: true,
+      message: "Stripe payment verified successfully.",
+    });
+  } catch (error) {
+    console.error("Error verifying Stripe payment:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Unable to verify Stripe payment." });
   }
 };
 
@@ -218,6 +266,7 @@ const updateOrderStatus = async (req, res) => {
 export {
   placeOrderCod,
   placeOrderStripe,
+  verifyStripePayment,
   placeOrderRazorpay,
   getAllOrders,
   getUserOrders,
