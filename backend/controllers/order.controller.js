@@ -26,6 +26,35 @@ const getRazorpayInstance = () => {
   return new Razorpay({ key_id: keyId, key_secret: keySecret });
 };
 
+const getRazorpayCheckoutErrorMessage = (error) => {
+  if (error.message === "Razorpay credentials are not configured.") {
+    return "Razorpay credentials are missing. Configure RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET, then restart the backend.";
+  }
+  const description =
+    error.error?.description || error.response?.data?.error?.description;
+  const code = error.error?.code || error.response?.data?.error?.code;
+  if (typeof description === "string" && description.trim()) {
+    return `Razorpay could not create the order${code ? ` (${code})` : ""}: ${description}`;
+  }
+  if (error.statusCode === 401) {
+    return "Razorpay rejected the configured API key pair. Verify that the Key ID and Key Secret match and were generated in the same Razorpay account.";
+  }
+  if (error.statusCode === 400) {
+    return "Razorpay rejected the order request. Check the Razorpay account setup and backend logs for details.";
+  }
+  return "Unable to start Razorpay checkout. Check the backend logs and Razorpay API connectivity.";
+};
+
+const logRazorpayCheckoutError = (context, error) => {
+  console.error(context, {
+    statusCode: error.statusCode || error.response?.status,
+    code: error.error?.code || error.response?.data?.error?.code,
+    description:
+      error.error?.description || error.response?.data?.error?.description,
+    message: error.message,
+  });
+};
+
 const LISTING_RESERVATION_MINUTES = 35;
 const LISTING_DELIVERY_FEE = 10;
 
@@ -281,7 +310,6 @@ const placeListingOrderRazorpay = async (req, res) => {
       amount: checkout.totalAmount * 100,
       currency: "INR",
       receipt: `listing_${order._id.toString().slice(-16)}`,
-      expire_by: Math.floor(reservationExpiresAt.getTime() / 1000),
     });
     order.razorpayOrderId = razorpayOrder.id;
     await order.save();
@@ -296,17 +324,14 @@ const placeListingOrderRazorpay = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Failed to create listing Razorpay checkout:", error);
+    logRazorpayCheckoutError("Failed to create listing Razorpay checkout:", error);
     if (order) {
       await releaseListingOrder(order);
       await orderModel.findByIdAndDelete(order._id);
     }
     return res.status(500).json({
       success: false,
-      message:
-        error.message === "Razorpay credentials are not configured."
-          ? error.message
-          : "Unable to start Razorpay checkout.",
+      message: getRazorpayCheckoutErrorMessage(error),
     });
   }
 };
@@ -629,13 +654,10 @@ const placeOrderRazorpay = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error creating Razorpay order:", error);
+    logRazorpayCheckoutError("Error creating Razorpay order:", error);
     return res.status(500).json({
       success: false,
-      message:
-        error.message === "Razorpay credentials are not configured."
-          ? error.message
-          : "Unable to start Razorpay checkout.",
+      message: getRazorpayCheckoutErrorMessage(error),
     });
   }
 };
@@ -748,12 +770,14 @@ const verifyRazorpayPayment = async (req, res) => {
 // User Order Data for Frontend
 const getUserOrders = async (req, res) => {
   try {
-    const { userId } = req.body;
-
     const orders = await orderModel
-      .find({ userId })
+      .find({ userId: req.userId })
       .populate("items.productId")
-      .populate("items.listingId")
+      .populate({
+        path: "items.listingId",
+        populate: { path: "owner", select: "name city state" },
+      })
+      .populate("statusUpdatedBy", "name")
       .sort({ createdAt: -1 });
 
     return res.status(200).json({
@@ -768,6 +792,93 @@ const getUserOrders = async (req, res) => {
   }
 };
 
+const getSellerOrders = async (req, res) => {
+  try {
+    const listings = await listingModel
+      .find({ owner: req.userId })
+      .select("_id");
+    const listingIds = listings.map((listing) => listing._id);
+    if (listingIds.length === 0) {
+      return res.status(200).json({ success: true, orders: [] });
+    }
+
+    const orders = await orderModel
+      .find({
+        source: "listing",
+        status: { $in: ["processing", "shipped", "delivered"] },
+        "items.listingId": { $in: listingIds },
+      })
+      .populate("userId", "name email")
+      .populate("items.listingId", "title images size owner")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({ success: true, orders });
+  } catch (error) {
+    console.error("Failed to load seller orders:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to load sales and fulfillment orders.",
+    });
+  }
+};
+
+const updateSellerOrderStatus = async (req, res) => {
+  const nextStatusByCurrentStatus = {
+    processing: "shipped",
+    shipped: "delivered",
+  };
+  try {
+    const listings = await listingModel
+      .find({ owner: req.userId })
+      .select("_id");
+    const listingIds = listings.map((listing) => listing._id);
+    if (listingIds.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "This order does not belong to one of your listings.",
+      });
+    }
+
+    const order = await orderModel.findOne({
+      _id: req.params.orderId,
+      source: "listing",
+      status: { $in: Object.keys(nextStatusByCurrentStatus) },
+      "items.listingId": { $in: listingIds },
+    });
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "An active order for one of your listings was not found.",
+      });
+    }
+
+    const nextStatus = nextStatusByCurrentStatus[order.status];
+    if (req.body.status !== nextStatus) {
+      return res.status(400).json({
+        success: false,
+        message: `This order can only be updated to ${nextStatus}.`,
+      });
+    }
+
+    order.status = nextStatus;
+    order.statusUpdatedBy = req.userId;
+    order.statusUpdatedAt = new Date();
+    await order.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `Order marked ${nextStatus}.`,
+      order,
+    });
+  } catch (error) {
+    console.error("Failed to update seller order status:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to update order status.",
+    });
+  }
+};
+
 export {
   placeOrderCod,
   placeOrderStripe,
@@ -775,6 +886,8 @@ export {
   placeOrderRazorpay,
   verifyRazorpayPayment,
   getUserOrders,
+  getSellerOrders,
+  updateSellerOrderStatus,
   placeListingOrderCod,
   placeListingOrderStripe,
   placeListingOrderRazorpay,

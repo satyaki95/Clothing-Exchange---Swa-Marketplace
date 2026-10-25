@@ -3,8 +3,14 @@ import { useContext, useState, useEffect } from "react";
 import { ShopContext } from "../context/ShopContext";
 import Title from "../components/Title";
 import axios from "axios";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
+
+const trackingSteps = [
+  ["processing", "Order placed"],
+  ["shipped", "Shipped"],
+  ["delivered", "Delivered"],
+];
 
 const Orders = () => {
   const { backendUrl, token, currency, setCartItems } = useContext(ShopContext);
@@ -73,8 +79,16 @@ const Orders = () => {
       <div className="text-2xl">
         <Title text1={"MY"} text2={"ORDERS"} />
       </div>
+      <div className="mb-5 flex justify-end">
+        <Link to="/seller-orders" className="border px-4 py-2 text-sm hover:bg-gray-50">
+          Manage my sales
+        </Link>
+      </div>
 
       <div>
+        {orderData.length === 0 && (
+          <p className="py-10 text-center text-sm text-gray-500">You have no orders yet.</p>
+        )}
         {orderData.map((order) => (
           <div key={order._id} className="border-t border-b">
             {order.items
@@ -122,20 +136,76 @@ const Orders = () => {
                             {order.paymentMethod.toUpperCase()}
                           </span>
                         </p>
+                        {listing?.owner?.name && (
+                          <p className="mt-1">
+                            Listed by:{" "}
+                            <span className="text-gray-500">{listing.owner.name}</span>
+                          </p>
+                        )}
                       </div>
                     </div>
 
-                    <div className="md:w-1/2 flex justify-between">
-                      <div className="flex items-center gap-2">
-                        <p className="min-w-2 h-2 rounded-full bg-green-500"></p>
-                        <p className="text-sm md:text-base">{order.status}</p>
+                    <div className="md:w-1/2">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-medium capitalize">
+                          {order.status}
+                        </p>
+                        <button
+                          onClick={loadOrderData}
+                          className="border px-4 py-2 text-sm font-medium rounded-sm"
+                        >
+                          Refresh tracking
+                        </button>
                       </div>
-                      <button
-                        onClick={loadOrderData}
-                        className="border px-4 py-2 text-sm font-medium rounded-sm"
-                      >
-                        Track Order
-                      </button>
+                      {order.source === "listing" && (
+                        <>
+                          <ol className="mt-3 flex items-start">
+                            {trackingSteps.map(([status, label], stepIndex) => {
+                              const currentIndex = trackingSteps.findIndex(
+                                ([currentStatus]) => currentStatus === order.status,
+                              );
+                              const isComplete =
+                                order.status === "delivered" ||
+                                (currentIndex >= 0 && stepIndex <= currentIndex);
+                              return (
+                                <li
+                                  key={status}
+                                  className="flex min-w-0 flex-1 flex-col items-center text-center"
+                                >
+                                  <span
+                                    className={`h-2.5 w-2.5 rounded-full ${
+                                      isComplete ? "bg-emerald-700" : "bg-gray-200"
+                                    }`}
+                                  />
+                                  <span className="mt-1 text-[10px] text-gray-500">
+                                    {label}
+                                  </span>
+                                </li>
+                              );
+                            })}
+                          </ol>
+                          {order.status === "cancelled" ? (
+                            <p className="mt-2 text-xs text-red-700">
+                              This order was cancelled.
+                            </p>
+                          ) : order.status === "pending" ? (
+                            <p className="mt-2 text-xs text-amber-700">
+                              Payment is pending; shipping updates are not available yet.
+                            </p>
+                          ) : order.statusUpdatedBy?.name ? (
+                            <p className="mt-2 text-xs text-gray-500">
+                              Shipping updated by {order.statusUpdatedBy.name} (listing owner)
+                              {order.statusUpdatedAt
+                                ? ` · ${new Date(order.statusUpdatedAt).toLocaleString()}`
+                                : ""}
+                            </p>
+                          ) : (
+                            <p className="mt-2 text-xs text-gray-500">
+                              Waiting for {listing?.owner?.name || "the listing owner"} to update shipping.
+                            </p>
+                          )}
+                        </>
+                      )}
                     </div>
                   </div>
                 );

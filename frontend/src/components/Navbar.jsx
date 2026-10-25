@@ -74,6 +74,7 @@ const Navbar = () => {
                 <p onClick={() => navigate("/profile")} className="cursor-pointer hover:text-black">My Profile</p>
                 <p onClick={() => navigate("/wardrobe")} className="cursor-pointer hover:text-black">My Wardrobe</p>
                 <p onClick={() => navigate("/swaps")} className="cursor-pointer hover:text-black">Swap Requests</p>
+                <p onClick={() => navigate("/seller-orders")} className="cursor-pointer hover:text-black">Sales & Fulfillment</p>
                 <p
                   onClick={() => navigate("/orders")}
                   className="cursor-pointer hover:text-black"
@@ -139,6 +140,8 @@ const Navbar = () => {
               <NavLink onClick={() => setVisible(false)} className="py-2 pl-6 border" to="/profile">MY PROFILE</NavLink>
               <NavLink onClick={() => setVisible(false)} className="py-2 pl-6 border" to="/wardrobe">MY WARDROBE</NavLink>
               <NavLink onClick={() => setVisible(false)} className="py-2 pl-6 border" to="/swaps">SWAP REQUESTS</NavLink>
+              <NavLink onClick={() => setVisible(false)} className="py-2 pl-6 border" to="/seller-orders">SALES & FULFILLMENT</NavLink>
+              <NavLink onClick={() => setVisible(false)} className="py-2 pl-6 border" to="/orders">MY ORDERS</NavLink>
               <button onClick={() => { setVisible(false); handleLogout(); }} className="py-2 pl-6 text-left border">LOG OUT</button>
             </>
           )}

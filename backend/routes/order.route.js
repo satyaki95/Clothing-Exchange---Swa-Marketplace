@@ -6,6 +6,8 @@ import {
   placeOrderRazorpay,
   verifyRazorpayPayment,
   getUserOrders,
+  getSellerOrders,
+  updateSellerOrderStatus,
   placeListingOrderCod,
   placeListingOrderStripe,
   placeListingOrderRazorpay,
@@ -28,6 +30,8 @@ orderRouter.post("/razorpay/verify", authUser, verifyRazorpayPayment);
 
 // Get user orders (Frontend)
 orderRouter.post("/user-orders", authUser, getUserOrders);
+orderRouter.get("/seller-orders", authUser, getSellerOrders);
+orderRouter.patch("/seller-orders/:orderId/status", authUser, updateSellerOrderStatus);
 orderRouter.post("/listing/place", authUser, placeListingOrderCod);
 orderRouter.post("/listing/stripe", authUser, placeListingOrderStripe);
 orderRouter.post("/listing/razorpay", authUser, placeListingOrderRazorpay);

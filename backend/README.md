@@ -4,7 +4,7 @@ The Express API uses MongoDB/Mongoose, JWT authentication, and Cloudinary for cl
 
 ## Configuration
 
-Configure `MONGODB_URI`, `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` in `backend/.env`. The existing payment routes also use Stripe or Razorpay credentials.
+Configure `MONGODB_URI`, `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` in `backend/.env`. Razorpay checkout requires `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` from the same Razorpay account; use matching test keys while developing and restart the backend after changing `.env`. Stripe checkout uses `STRIPE_SECRET_KEY`.
 
 ## Exchange endpoints
 
@@ -26,9 +26,11 @@ Protected member routes use the `token` request header returned from `/api/user/
 | `POST /api/swaps/:id/dispute` | Escalate an accepted exchange for review |
 | `POST /api/order/listing/place` | Buy a community listing with cash on delivery |
 | `POST /api/order/listing/stripe`, `POST /api/order/listing/razorpay` | Buy a community listing with an online payment provider |
+| `GET /api/order/seller-orders` | View active paid/COD orders for the signed-in member's listings |
+| `PATCH /api/order/seller-orders/:orderId/status` | Listing owner advances fulfillment from processing to shipped to delivered |
 
 Admin routes are under `/api/admin` and require a token from `POST /api/user/admin`. They provide analytics, member management, listing moderation, swap monitoring, and dispute resolution. Nearby matching returns rounded distances; raw profile coordinates are not included in public listing responses.
 
-The public `/api/product/list` and `/api/product/single` endpoints continue to support the existing storefront catalog. Cart, checkout, payment verification, and member order-history routes remain available. Admin order listing/status updates and legacy store-product deletion endpoints have been removed with their admin screens.
+Buyer order history includes the listing owner and the seller who last updated its shipping status. Listing owners can update eligible orders in Sales & Fulfillment; each status change is recorded on the order. The public `/api/product/list` and `/api/product/single` endpoints continue to support the existing storefront catalog. Cart, checkout, payment verification, and member order-history routes remain available. Admin order listing/status updates and legacy store-product deletion endpoints have been removed with their admin screens.
 
 Community listing purchases use the estimated swap value as the item price plus the existing ₹10 delivery charge. Online checkouts reserve the listing for up to 35 minutes; COD orders mark the listing sold when placed.

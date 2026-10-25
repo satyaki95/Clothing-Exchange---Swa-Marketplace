@@ -40,6 +40,15 @@ const orderSchema = new mongoose.Schema(
       enum: ["pending", "processing", "shipped", "delivered", "cancelled"],
       default: "pending",
     },
+    statusUpdatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    statusUpdatedAt: {
+      type: Date,
+      default: null,
+    },
     paymentMethod: {
       type: String,
       enum: ["stripe", "razorpay", "cod"],
