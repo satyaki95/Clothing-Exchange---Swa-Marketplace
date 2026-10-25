@@ -11,7 +11,9 @@ const Swaps = () => {
   const [messages, setMessages] = useState([]);
   const [messageText, setMessageText] = useState("");
   const [disputeText, setDisputeText] = useState("");
-  const messageEnd = useRef(null);
+  const messageList = useRef(null);
+  const messageSnapshot = useRef({ swapId: "", messages: [] });
+  const shouldAutoScroll = useRef(false);
   const messageErrorShown = useRef(false);
 
   const loadSwaps = useCallback(async () => {
@@ -44,7 +46,26 @@ const Swaps = () => {
         `${backendUrl}/api/swaps/${selectedId}/messages`,
         { headers: { token } },
       );
-      setMessages(data.messages || []);
+      const nextMessages = data.messages || [];
+      const previousMessages =
+        messageSnapshot.current.swapId === selectedId
+          ? messageSnapshot.current.messages
+          : [];
+      const conversationChanged = messageSnapshot.current.swapId !== selectedId;
+      const previousIds = new Set(previousMessages.map((message) => message._id));
+      const hasNewMessages = nextMessages.some(
+        (message) => !previousIds.has(message._id),
+      );
+      if (conversationChanged || hasNewMessages) {
+        const container = messageList.current;
+        const isNearBottom =
+          !container ||
+          container.scrollHeight - container.scrollTop - container.clientHeight <= 64;
+        shouldAutoScroll.current =
+          nextMessages.length > 0 && (conversationChanged || isNearBottom);
+        messageSnapshot.current = { swapId: selectedId, messages: nextMessages };
+        setMessages(nextMessages);
+      }
       messageErrorShown.current = false;
     } catch (error) {
       if (!messageErrorShown.current) {
@@ -65,7 +86,12 @@ const Swaps = () => {
   }, [loadMessages, selectedId]);
 
   useEffect(() => {
-    messageEnd.current?.scrollIntoView({ behavior: "smooth" });
+    if (!shouldAutoScroll.current) return;
+    messageList.current?.scrollTo({
+      top: messageList.current.scrollHeight,
+      behavior: "smooth",
+    });
+    shouldAutoScroll.current = false;
   }, [messages]);
 
   const selectedSwap = swaps.find((swap) => swap._id === selectedId);
@@ -187,13 +213,12 @@ const Swaps = () => {
             <h2 className="font-medium">Negotiation chat</h2>
             <p className="mt-1 text-xs text-gray-500">{selectedSwap ? `About ${selectedSwap.requestedListing?.title || "your swap"}` : "Choose an active request to message the other member."}</p>
           </div>
-          <div className="flex-1 space-y-3 overflow-y-auto p-4">
+          <div ref={messageList} className="flex-1 space-y-3 overflow-y-auto p-4">
             {selectedSwap && messages.map((message) => {
               const own = message.sender?._id === userId;
               return <div key={message._id} className={`flex ${own ? "justify-end" : "justify-start"}`}><div className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${own ? "bg-emerald-900 text-white" : "bg-stone-100 text-gray-800"}`}><p className="mb-1 text-[10px] opacity-70">{own ? "You" : message.sender?.name} · {new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p><p className="whitespace-pre-wrap break-words">{message.text}</p></div></div>;
             })}
             {selectedSwap && messages.length === 0 && <p className="py-10 text-center text-xs text-gray-500">Start the conversation to agree on exchange details.</p>}
-            <div ref={messageEnd} />
           </div>
           {selectedSwap && ["requested", "accepted", "disputed"].includes(selectedSwap.status) && (
             <form onSubmit={sendMessage} className="flex gap-2 border-t border-stone-200 p-3">
