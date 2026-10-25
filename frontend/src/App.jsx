@@ -12,6 +12,8 @@ import Marketplace from "./pages/Marketplace";
 import Wardrobe from "./pages/Wardrobe";
 import Profile from "./pages/Profile";
 import Swaps from "./pages/Swaps";
+import ListingDetails from "./pages/ListingDetails";
+import ListingCheckout from "./pages/ListingCheckout";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import SearchBar from "./components/SearchBar";
@@ -35,7 +37,9 @@ const App = () => {
       <SearchBar />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/collection" element={<Collection />} />
+        <Route path="/collection" element={<Marketplace />} />
+        <Route path="/shop" element={<Marketplace />} />
+        <Route path="/store" element={<Collection />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/product/:productId" element={<Product />} />
@@ -44,6 +48,8 @@ const App = () => {
         <Route path="/place-order" element={<PlaceOrder />} />
         <Route path="/orders" element={<Orders />} />
         <Route path="/marketplace" element={<Marketplace />} />
+        <Route path="/listing/:listingId" element={<ListingDetails />} />
+        <Route path="/listing/:listingId/checkout" element={<ListingCheckout />} />
         <Route path="/wardrobe" element={<Wardrobe />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/swaps" element={<Swaps />} />

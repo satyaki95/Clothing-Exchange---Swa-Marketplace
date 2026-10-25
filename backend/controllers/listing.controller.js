@@ -1,14 +1,47 @@
 import { v2 as cloudinary } from "cloudinary";
 import listingModel from "../models/listing.model.js";
+import orderModel from "../models/order.model.js";
 import userModel from "../models/user.model.js";
 import estimateSwapValue from "../utils/swapValue.js";
 
 const publicListingFields = "title description images category size brand condition estimatedValue status owner createdAt";
 
+const releaseExpiredPurchaseReservations = async () => {
+  const expired = await listingModel
+    .find({
+      status: "reserved",
+      purchaseOrder: { $ne: null },
+      reservationExpiresAt: { $lte: new Date() },
+    })
+    .select("_id purchaseOrder");
+  if (expired.length === 0) return;
+
+  await orderModel.updateMany(
+    {
+      _id: { $in: expired.map((item) => item.purchaseOrder) },
+      status: "pending",
+      payment: false,
+    },
+    { $set: { status: "cancelled" } },
+  );
+  await listingModel.updateMany(
+    { _id: { $in: expired.map((item) => item._id) }, status: "reserved" },
+    {
+      $set: {
+        status: "available",
+        purchaseOrder: null,
+        reservationExpiresAt: null,
+      },
+    },
+  );
+};
+
 const listListings = async (req, res) => {
   try {
+    await releaseExpiredPurchaseReservations();
     const { category, size, condition, city, maxDistance } = req.query;
     const filter = { status: "available" };
+    if (req.userId) filter.owner = { $ne: req.userId };
     if (category) filter.category = category;
     if (size) filter.size = size;
     if (condition) filter.condition = condition;
@@ -78,6 +111,28 @@ const getMyListings = async (req, res) => {
   } catch (error) {
     console.error("Failed to load user's listings:", error);
     res.status(500).json({ success: false, message: "Unable to load your listings." });
+  }
+};
+
+const getListingById = async (req, res) => {
+  try {
+    await releaseExpiredPurchaseReservations();
+    const filter = { _id: req.params.id, status: "available" };
+    if (req.userId) filter.owner = { $ne: req.userId };
+    const listing = await listingModel
+      .findOne(filter)
+      .select(publicListingFields)
+      .populate("owner", "name city state");
+    if (!listing) {
+      return res.status(404).json({
+        success: false,
+        message: "Available clothing listing not found",
+      });
+    }
+    res.status(200).json({ success: true, listing });
+  } catch (error) {
+    console.error("Failed to load clothing listing:", error);
+    res.status(500).json({ success: false, message: "Unable to load listing." });
   }
 };
 
@@ -180,4 +235,12 @@ const estimateValue = (req, res) => {
   });
 };
 
-export { listListings, getMyListings, createListing, updateListing, removeListing, estimateValue };
+export {
+  listListings,
+  getMyListings,
+  getListingById,
+  createListing,
+  updateListing,
+  removeListing,
+  estimateValue,
+};

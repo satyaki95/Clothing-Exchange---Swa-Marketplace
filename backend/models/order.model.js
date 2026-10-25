@@ -12,11 +12,13 @@ const orderSchema = new mongoose.Schema(
         productId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Product",
-          required: true,
         },
+        listingId: { type: mongoose.Schema.Types.ObjectId, ref: "Listing" },
+        name: { type: String, default: "" },
+        unitPrice: { type: Number, min: 0 },
         size: {
           type: String,
-          required: true,
+          default: "",
         },
         quantity: {
           type: Number,
@@ -56,6 +58,11 @@ const orderSchema = new mongoose.Schema(
     },
     razorpayPaymentId: {
       type: String,
+    },
+    source: {
+      type: String,
+      enum: ["cart", "listing"],
+      default: "cart",
     },
   },
   { timestamps: true },

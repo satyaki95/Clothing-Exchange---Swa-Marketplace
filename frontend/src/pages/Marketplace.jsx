@@ -2,6 +2,7 @@ import { useContext, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { ShopContext } from "../context/ShopContext";
+import { Link } from "react-router-dom";
 
 const Marketplace = () => {
   const { backendUrl, token, navigate } = useContext(ShopContext);
@@ -189,10 +190,12 @@ const Marketplace = () => {
         <div className="mt-7 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {visibleListings.map((item) => (
             <article key={item._id} className="overflow-hidden rounded-xl border border-stone-200 bg-white">
-              <img src={item.images?.[0]} alt={item.title} className="aspect-[4/5] w-full object-cover" />
+              <Link to={`/listing/${item._id}`} aria-label={`View ${item.title} details`}>
+                <img src={item.images?.[0]} alt={item.title} className="aspect-[4/5] w-full object-cover transition-transform duration-300 hover:scale-[1.02]" />
+              </Link>
               <div className="space-y-3 p-4">
                 <div className="flex items-start justify-between gap-3">
-                  <div><h2 className="font-medium">{item.title}</h2><p className="mt-1 text-xs text-gray-500">{item.brand} · {item.size} · {item.condition}</p></div>
+                  <div><Link to={`/listing/${item._id}`} className="font-medium hover:underline">{item.title}</Link><p className="mt-1 text-xs text-gray-500">{item.brand} · {item.size} · {item.condition}</p></div>
                   <span className="whitespace-nowrap rounded-full bg-emerald-50 px-2.5 py-1 text-xs text-emerald-900">₹{item.estimatedValue}</span>
                 </div>
                 <p className="line-clamp-2 text-sm text-gray-600">{item.description}</p>

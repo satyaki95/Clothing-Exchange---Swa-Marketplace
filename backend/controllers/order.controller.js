@@ -1,6 +1,7 @@
 import orderModel from "../models/order.model.js";
 import productModel from "../models/product.model.js";
 import userModel from "../models/user.model.js";
+import listingModel from "../models/listing.model.js";
 import Stripe from "stripe";
 import Razorpay from "razorpay";
 import crypto from "node:crypto";
@@ -23,6 +24,338 @@ const getRazorpayCredentials = () => {
 const getRazorpayInstance = () => {
   const { keyId, keySecret } = getRazorpayCredentials();
   return new Razorpay({ key_id: keyId, key_secret: keySecret });
+};
+
+const LISTING_RESERVATION_MINUTES = 35;
+const LISTING_DELIVERY_FEE = 10;
+
+const validateListingCheckout = async (userId, listingId, address) => {
+  const expiredListings = await listingModel
+    .find({
+      status: "reserved",
+      purchaseOrder: { $ne: null },
+      reservationExpiresAt: { $lte: new Date() },
+    })
+    .select("_id purchaseOrder");
+  if (expiredListings.length > 0) {
+    const orderIds = expiredListings.map((listing) => listing.purchaseOrder);
+    await orderModel.updateMany(
+      { _id: { $in: orderIds }, status: "pending", payment: false },
+      { $set: { status: "cancelled" } },
+    );
+    await listingModel.updateMany(
+      { _id: { $in: expiredListings.map((listing) => listing._id) }, status: "reserved" },
+      { $set: { status: "available", purchaseOrder: null, reservationExpiresAt: null } },
+    );
+  }
+  if (!listingId || !address || typeof address !== "object") {
+    return { error: "Listing and delivery address are required." };
+  }
+  const requiredAddressFields = [
+    "firstName",
+    "lastName",
+    "email",
+    "street",
+    "city",
+    "state",
+    "zipcode",
+    "country",
+    "phone",
+  ];
+  if (requiredAddressFields.some((field) => !String(address[field] || "").trim())) {
+    return { error: "Complete all delivery address fields." };
+  }
+  const listing = await listingModel.findOne({
+    _id: listingId,
+    status: "available",
+    owner: { $ne: userId },
+  });
+  if (!listing) {
+    return { error: "This listing is no longer available." };
+  }
+  const itemPrice = Number(listing.estimatedValue);
+  if (!Number.isSafeInteger(itemPrice) || itemPrice <= 0) {
+    return { error: "This listing has an invalid purchase price." };
+  }
+  return { listing, itemPrice, totalAmount: itemPrice + LISTING_DELIVERY_FEE };
+};
+
+const createListingPurchaseOrder = async ({
+  userId,
+  listing,
+  address,
+  itemPrice,
+  totalAmount,
+  paymentMethod,
+}) =>
+  orderModel.create({
+    userId,
+    items: [
+      {
+        listingId: listing._id,
+        name: listing.title,
+        unitPrice: itemPrice,
+        size: listing.size,
+        quantity: 1,
+      },
+    ],
+    totalAmount,
+    paymentMethod,
+    payment: false,
+    shippingAddress: address,
+    source: "listing",
+    status: paymentMethod === "cod" ? "processing" : "pending",
+  });
+
+const reserveListingForPayment = async (listing, order) => {
+  const reservationExpiresAt = new Date(
+    Date.now() + LISTING_RESERVATION_MINUTES * 60 * 1000,
+  );
+  const reserved = await listingModel.findOneAndUpdate(
+    { _id: listing._id, status: "available" },
+    {
+      $set: {
+        status: "reserved",
+        purchaseOrder: order._id,
+        reservationExpiresAt,
+      },
+    },
+    { new: true },
+  );
+  return { reserved, reservationExpiresAt };
+};
+
+const releaseListingOrder = async (order) => {
+  await listingModel.updateOne(
+    { purchaseOrder: order._id, status: "reserved" },
+    {
+      $set: { status: "available", purchaseOrder: null, reservationExpiresAt: null },
+    },
+  );
+};
+
+const completeListingPurchase = async (order) => {
+  if (!["pending", "processing"].includes(order.status)) return false;
+  const sold = await listingModel.findOneAndUpdate(
+    { purchaseOrder: order._id, status: "reserved" },
+    { $set: { status: "sold", reservationExpiresAt: null } },
+    { new: true },
+  );
+  if (sold) return true;
+  return Boolean(
+    await listingModel.findOne({
+      purchaseOrder: order._id,
+      status: "sold",
+    }).select("_id"),
+  );
+};
+
+const placeListingOrderCod = async (req, res) => {
+  let order;
+  try {
+    const { listingId, address } = req.body;
+    const checkout = await validateListingCheckout(req.userId, listingId, address);
+    if (checkout.error) {
+      return res.status(400).json({ success: false, message: checkout.error });
+    }
+    order = await createListingPurchaseOrder({
+      userId: req.userId,
+      listing: checkout.listing,
+      address,
+      itemPrice: checkout.itemPrice,
+      totalAmount: checkout.totalAmount,
+      paymentMethod: "cod",
+    });
+    const sold = await listingModel.findOneAndUpdate(
+      { _id: checkout.listing._id, status: "available" },
+      { $set: { status: "sold", purchaseOrder: order._id, reservationExpiresAt: null } },
+      { new: true },
+    );
+    if (!sold) {
+      await orderModel.findByIdAndDelete(order._id);
+      return res.status(409).json({ success: false, message: "This listing was just purchased by someone else." });
+    }
+    return res.status(201).json({
+      success: true,
+      message: "Purchase placed successfully.",
+      order,
+    });
+  } catch (error) {
+    console.error("Failed to place listing COD order:", error);
+    if (order) await orderModel.findByIdAndDelete(order._id);
+    return res.status(500).json({ success: false, message: "Unable to place purchase order." });
+  }
+};
+
+const placeListingOrderStripe = async (req, res) => {
+  let order;
+  try {
+    const { listingId, address } = req.body;
+    const checkout = await validateListingCheckout(req.userId, listingId, address);
+    if (checkout.error) {
+      return res.status(400).json({ success: false, message: checkout.error });
+    }
+    const { origin } = req.headers;
+    if (!origin) {
+      return res.status(400).json({ success: false, message: "Checkout origin is required." });
+    }
+    order = await createListingPurchaseOrder({
+      userId: req.userId,
+      listing: checkout.listing,
+      address,
+      itemPrice: checkout.itemPrice,
+      totalAmount: checkout.totalAmount,
+      paymentMethod: "stripe",
+    });
+    const { reserved, reservationExpiresAt } = await reserveListingForPayment(checkout.listing, order);
+    if (!reserved) {
+      await orderModel.findByIdAndDelete(order._id);
+      return res.status(409).json({ success: false, message: "This listing was just purchased by someone else." });
+    }
+    const expiresAt = Math.floor(reservationExpiresAt.getTime() / 1000);
+    const session = await stripe.checkout.sessions.create({
+      line_items: [
+        {
+          price_data: {
+            currency: "inr",
+            product_data: { name: checkout.listing.title },
+            unit_amount: checkout.itemPrice * 100,
+          },
+          quantity: 1,
+        },
+        {
+          price_data: {
+            currency: "inr",
+            product_data: { name: "Delivery fee" },
+            unit_amount: LISTING_DELIVERY_FEE * 100,
+          },
+          quantity: 1,
+        },
+      ],
+      mode: "payment",
+      expires_at: expiresAt,
+      success_url: `${origin}/orders?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/checkout/listing/${checkout.listing._id}?canceled=1&orderId=${order._id}`,
+    });
+    if (!session.url) throw new Error("Stripe checkout session did not include a redirect URL.");
+    order.stripeSessionId = session.id;
+    await order.save();
+    return res.status(201).json({
+      success: true,
+      order,
+      checkoutUrl: session.url,
+    });
+  } catch (error) {
+    console.error("Failed to create listing Stripe checkout:", error);
+    if (order) {
+      await releaseListingOrder(order);
+      await orderModel.findByIdAndDelete(order._id);
+    }
+    return res.status(500).json({ success: false, message: "Unable to start Stripe checkout." });
+  }
+};
+
+const placeListingOrderRazorpay = async (req, res) => {
+  let order;
+  try {
+    const { listingId, address } = req.body;
+    const checkout = await validateListingCheckout(req.userId, listingId, address);
+    if (checkout.error) {
+      return res.status(400).json({ success: false, message: checkout.error });
+    }
+    order = await createListingPurchaseOrder({
+      userId: req.userId,
+      listing: checkout.listing,
+      address,
+      itemPrice: checkout.itemPrice,
+      totalAmount: checkout.totalAmount,
+      paymentMethod: "razorpay",
+    });
+    const { reserved, reservationExpiresAt } = await reserveListingForPayment(checkout.listing, order);
+    if (!reserved) {
+      await orderModel.findByIdAndDelete(order._id);
+      return res.status(409).json({ success: false, message: "This listing was just purchased by someone else." });
+    }
+    const razorpayInstance = getRazorpayInstance();
+    const razorpayOrder = await razorpayInstance.orders.create({
+      amount: checkout.totalAmount * 100,
+      currency: "INR",
+      receipt: `listing_${order._id.toString().slice(-16)}`,
+      expire_by: Math.floor(reservationExpiresAt.getTime() / 1000),
+    });
+    order.razorpayOrderId = razorpayOrder.id;
+    await order.save();
+    return res.status(201).json({
+      success: true,
+      order,
+      keyId: getRazorpayCredentials().keyId,
+      razorpayOrder: {
+        id: razorpayOrder.id,
+        amount: razorpayOrder.amount,
+        currency: razorpayOrder.currency,
+      },
+    });
+  } catch (error) {
+    console.error("Failed to create listing Razorpay checkout:", error);
+    if (order) {
+      await releaseListingOrder(order);
+      await orderModel.findByIdAndDelete(order._id);
+    }
+    return res.status(500).json({
+      success: false,
+      message:
+        error.message === "Razorpay credentials are not configured."
+          ? error.message
+          : "Unable to start Razorpay checkout.",
+    });
+  }
+};
+
+const cancelListingOrder = async (req, res) => {
+  try {
+    const order = await orderModel.findOne({
+      _id: req.params.orderId,
+      userId: req.userId,
+      source: "listing",
+      payment: false,
+      status: "pending",
+      paymentMethod: { $in: ["stripe", "razorpay"] },
+    });
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Pending listing purchase not found." });
+    }
+    if (order.paymentMethod === "razorpay") {
+      const { reservationExpiresAt } =
+        await listingModel.findOne({ purchaseOrder: order._id }).select("reservationExpiresAt") || {};
+      if (!reservationExpiresAt || reservationExpiresAt > new Date()) {
+        return res.status(409).json({
+          success: false,
+          message: "The listing remains reserved until the Razorpay checkout expires.",
+        });
+      }
+    } else if (order.stripeSessionId) {
+      const session = await stripe.checkout.sessions.retrieve(order.stripeSessionId);
+      if (session.payment_status === "paid") {
+        return res.status(409).json({ success: false, message: "This purchase has already been paid." });
+      }
+      if (session.status === "open") {
+        await stripe.checkout.sessions.expire(order.stripeSessionId);
+      }
+    }
+    const cancelledOrder = await orderModel.findOneAndUpdate(
+      { _id: order._id, status: "pending", payment: false },
+      { $set: { status: "cancelled" } },
+      { new: true },
+    );
+    if (!cancelledOrder) {
+      return res.status(409).json({ success: false, message: "Purchase checkout is no longer active." });
+    }
+    await releaseListingOrder(order);
+    return res.status(200).json({ success: true, message: "Listing reservation released." });
+  } catch (error) {
+    console.error("Failed to cancel listing checkout:", error);
+    return res.status(500).json({ success: false, message: "Unable to cancel listing checkout." });
+  }
 };
 
 // Placing orders using COD Method
@@ -186,15 +519,27 @@ const verifyStripePayment = async (req, res) => {
         .json({ success: false, message: "Stripe payment has not completed." });
     }
 
+    if (order.source === "listing") {
+      if (!(await completeListingPurchase(order))) {
+        return res.status(409).json({
+          success: false,
+          message: "This listing reservation expired. Please start checkout again.",
+        });
+      }
+    }
     if (!order.payment) {
       order.payment = true;
+      if (order.source === "listing") order.status = "processing";
       await order.save();
     }
-    await userModel.findByIdAndUpdate(userId, { cartData: {} });
+    if (order.source !== "listing") {
+      await userModel.findByIdAndUpdate(userId, { cartData: {} });
+    }
 
     return res.status(200).json({
       success: true,
       message: "Stripe payment verified successfully.",
+      source: order.source,
     });
   } catch (error) {
     console.error("Error verifying Stripe payment:", error);
@@ -368,16 +713,28 @@ const verifyRazorpayPayment = async (req, res) => {
         .json({ success: false, message: "Razorpay payment has not been captured." });
     }
 
+    if (order.source === "listing") {
+      if (!(await completeListingPurchase(order))) {
+        return res.status(409).json({
+          success: false,
+          message: "This listing reservation expired. Please start checkout again.",
+        });
+      }
+    }
     if (!order.payment) {
       order.payment = true;
       order.razorpayPaymentId = razorpay_payment_id;
+      if (order.source === "listing") order.status = "processing";
       await order.save();
     }
-    await userModel.findByIdAndUpdate(userId, { cartData: {} });
+    if (order.source !== "listing") {
+      await userModel.findByIdAndUpdate(userId, { cartData: {} });
+    }
 
     return res.status(200).json({
       success: true,
       message: "Razorpay payment verified successfully.",
+      source: order.source,
     });
   } catch (error) {
     console.error("Error verifying Razorpay payment:", error);
@@ -396,6 +753,7 @@ const getUserOrders = async (req, res) => {
     const orders = await orderModel
       .find({ userId })
       .populate("items.productId")
+      .populate("items.listingId")
       .sort({ createdAt: -1 });
 
     return res.status(200).json({
@@ -417,4 +775,8 @@ export {
   placeOrderRazorpay,
   verifyRazorpayPayment,
   getUserOrders,
+  placeListingOrderCod,
+  placeListingOrderStripe,
+  placeListingOrderRazorpay,
+  cancelListingOrder,
 };

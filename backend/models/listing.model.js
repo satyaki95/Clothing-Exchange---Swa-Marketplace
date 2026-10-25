@@ -22,11 +22,13 @@ const listingSchema = new mongoose.Schema(
     estimatedValue: { type: Number, required: true, min: 0 },
     status: {
       type: String,
-      enum: ["available", "reserved", "swapped", "removed"],
+      enum: ["available", "reserved", "swapped", "sold", "removed"],
       default: "available",
       index: true,
     },
     reservedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Swap", default: null },
+    purchaseOrder: { type: mongoose.Schema.Types.ObjectId, ref: "Order", default: null },
+    reservationExpiresAt: { type: Date, default: null },
   },
   { timestamps: true },
 );

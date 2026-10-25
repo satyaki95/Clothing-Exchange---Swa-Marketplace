@@ -6,6 +6,10 @@ import {
   placeOrderRazorpay,
   verifyRazorpayPayment,
   getUserOrders,
+  placeListingOrderCod,
+  placeListingOrderStripe,
+  placeListingOrderRazorpay,
+  cancelListingOrder,
 } from "../controllers/order.controller.js";
 import authUser from "../middleware/auth.js";
 
@@ -24,5 +28,9 @@ orderRouter.post("/razorpay/verify", authUser, verifyRazorpayPayment);
 
 // Get user orders (Frontend)
 orderRouter.post("/user-orders", authUser, getUserOrders);
+orderRouter.post("/listing/place", authUser, placeListingOrderCod);
+orderRouter.post("/listing/stripe", authUser, placeListingOrderStripe);
+orderRouter.post("/listing/razorpay", authUser, placeListingOrderRazorpay);
+orderRouter.post("/listing/:orderId/cancel", authUser, cancelListingOrder);
 
 export default orderRouter;
