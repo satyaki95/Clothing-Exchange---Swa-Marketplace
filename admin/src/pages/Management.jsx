@@ -25,15 +25,30 @@ const Management = ({ section, token }) => {
         `${backendUrl}/api/admin${config.endpoint}`,
         { headers: { token } },
       );
-      setData(response.analytics || response.users || response.listings || response.swaps);
+      const payload =
+        section === "dashboard"
+          ? response.analytics
+          : response[section];
+      if (
+        section === "dashboard"
+          ? !payload || typeof payload !== "object" || Array.isArray(payload)
+          : !Array.isArray(payload)
+      ) {
+        throw new Error("The server returned data in an unexpected format.");
+      }
+      setData(payload);
     } catch (error) {
-      const message = error.response?.data?.message || "Unable to load admin data.";
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Unable to load admin data.";
+      setData(null);
       setLoadError(message);
       toast.error(message);
     } finally {
       setLoading(false);
     }
-  }, [config.endpoint, token]);
+  }, [config.endpoint, section, token]);
 
   useEffect(() => {
     Promise.resolve().then(load);
@@ -85,6 +100,7 @@ const Management = ({ section, token }) => {
       toast.error(error.response?.data?.message || "Unable to resolve dispute.");
     }
   };
+  const records = Array.isArray(data) ? data : [];
 
   if (loading) return <p className="p-8 text-center text-gray-500">Loading marketplace data…</p>;
   if (loadError) return <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-900"><p>{loadError}</p><button onClick={load} className="mt-3 border border-red-300 px-4 py-2 text-xs">Retry</button></div>;
@@ -114,7 +130,7 @@ const Management = ({ section, token }) => {
         <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
           <table className="w-full min-w-[650px] text-left text-sm">
             <thead className="bg-gray-100 text-xs uppercase text-gray-500"><tr><th className="px-4 py-3">Member</th><th className="px-4 py-3">Location</th><th className="px-4 py-3">Joined</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Action</th></tr></thead>
-            <tbody>{(data || []).map((user) => <tr key={user._id} className="border-t border-gray-100"><td className="px-4 py-3"><p className="font-medium text-gray-900">{user.name}</p><p className="text-xs text-gray-500">{user.email}</p></td><td className="px-4 py-3">{[user.city, user.state].filter(Boolean).join(", ") || "—"}</td><td className="px-4 py-3">{new Date(user.createdAt).toLocaleDateString()}</td><td className="px-4 py-3"><span className={user.isSuspended ? "text-red-700" : "text-emerald-800"}>{user.isSuspended ? "Suspended" : "Active"}</span></td><td className="px-4 py-3"><button onClick={() => setSuspension(user)} className="border border-gray-300 px-3 py-1.5 text-xs">{user.isSuspended ? "Restore" : "Suspend"}</button></td></tr>)}</tbody>
+            <tbody>{records.map((user) => <tr key={user._id} className="border-t border-gray-100"><td className="px-4 py-3"><p className="font-medium text-gray-900">{user.name}</p><p className="text-xs text-gray-500">{user.email}</p></td><td className="px-4 py-3">{[user.city, user.state].filter(Boolean).join(", ") || "—"}</td><td className="px-4 py-3">{new Date(user.createdAt).toLocaleDateString()}</td><td className="px-4 py-3"><span className={user.isSuspended ? "text-red-700" : "text-emerald-800"}>{user.isSuspended ? "Suspended" : "Active"}</span></td><td className="px-4 py-3"><button onClick={() => setSuspension(user)} className="border border-gray-300 px-3 py-1.5 text-xs">{user.isSuspended ? "Restore" : "Suspend"}</button></td></tr>)}</tbody>
           </table>
           {data?.length === 0 && <p className="p-8 text-center text-gray-500">No members yet.</p>}
         </div>
@@ -122,7 +138,7 @@ const Management = ({ section, token }) => {
 
       {section === "listings" && (
         <div className="space-y-3">
-          {(data || []).map((listing) => <article key={listing._id} className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-3 sm:flex-row sm:items-center">
+          {records.map((listing) => <article key={listing._id} className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-3 sm:flex-row sm:items-center">
             <img src={listing.images?.[0]} alt={listing.title} className="h-20 w-20 rounded object-cover" />
             <div className="min-w-0 flex-1"><p className="font-medium text-gray-900">{listing.title}</p><p className="text-xs text-gray-500">{listing.category} · {listing.size} · {listing.condition} · ₹{listing.estimatedValue}</p><p className="mt-1 text-xs text-gray-500">Owner: {listing.owner?.name || "Unknown"} ({listing.owner?.email || "no email"}) · Status: {listing.status}</p></div>
             {listing.status !== "removed" && <button onClick={() => removeListing(listing._id)} className="self-start border border-red-200 px-3 py-2 text-xs text-red-700 sm:self-center">Remove listing</button>}
@@ -133,7 +149,7 @@ const Management = ({ section, token }) => {
 
       {section === "swaps" && (
         <div className="space-y-4">
-          {(data || []).map((swap) => (
+          {records.map((swap) => (
             <article key={swap._id} className="rounded-lg border border-gray-200 bg-white p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div><p className="font-medium text-gray-900">{swap.fromUser?.name} ↔ {swap.toUser?.name}</p><p className="mt-1 text-xs text-gray-500">Request {swap._id} · {new Date(swap.updatedAt).toLocaleString()}</p></div>

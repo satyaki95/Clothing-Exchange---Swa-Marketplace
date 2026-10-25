@@ -2,8 +2,10 @@ import { useState } from "react";
 import axios from "axios";
 import { backendUrl } from "../App";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 const Login = ({ setToken }) => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -18,6 +20,7 @@ const Login = ({ setToken }) => {
 
       if (response.data.success) {
         setToken(response.data.token);
+        navigate("/dashboard", { replace: true });
         toast.success(response.data.message || "Admin logged in successfully.");
       } else {
         toast.error(response.data.message || "Unable to log in.");

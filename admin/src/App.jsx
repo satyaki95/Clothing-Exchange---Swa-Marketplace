@@ -2,7 +2,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
-import Add from "./pages/Add";
 import List from "./pages/List";
 import Orders from "./pages/Orders";
 import { useEffect, useState } from "react";
@@ -50,7 +49,6 @@ const App = () => {
                 <Route path="/users" element={<Management section="users" token={token} />} />
                 <Route path="/listings" element={<Management section="listings" token={token} />} />
                 <Route path="/swaps" element={<Management section="swaps" token={token} />} />
-                <Route path="/add" element={<Add token={token} />} />
                 <Route path="/list" element={<List token={token} />} />
                 <Route path="/orders" element={<Orders token={token} />} />
               </Routes>
