@@ -1,6 +1,6 @@
 # Swa Marketplace admin app
 
-The admin app provides marketplace analytics, member suspension/restoration, clothing-listing moderation, active swap monitoring, and dispute resolution. The existing store-product and order-management screens are retained.
+The admin app provides marketplace analytics, member suspension/restoration, clothing-listing moderation, active swap monitoring, and dispute resolution.
 
 ## Run locally
 

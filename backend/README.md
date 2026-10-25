@@ -26,4 +26,4 @@ Protected member routes use the `token` request header returned from `/api/user/
 
 Admin routes are under `/api/admin` and require a token from `POST /api/user/admin`. They provide analytics, member management, listing moderation, swap monitoring, and dispute resolution. Nearby matching returns rounded distances; raw profile coordinates are not included in public listing responses.
 
-The `/api/product`, `/api/cart`, and `/api/order` routes continue to support the original storefront.
+The public `/api/product/list` and `/api/product/single` endpoints continue to support the existing storefront catalog. Cart, checkout, payment verification, and member order-history routes remain available. Admin order listing/status updates and legacy store-product deletion endpoints have been removed with their admin screens.
