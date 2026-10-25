@@ -35,7 +35,11 @@ const Navbar = () => {
         </NavLink>
 
         <NavLink to="/collection" className="flex flex-col items-center gap-1">
-          <p>COLLECTION</p>
+          <p>SHOP</p>
+          <hr className="w-2/4 border-none h-[1.5px] bg-gray-700 hidden" />
+        </NavLink>
+        <NavLink to="/marketplace" className="flex flex-col items-center gap-1">
+          <p>SWAP CLOSET</p>
           <hr className="w-2/4 border-none h-[1.5px] bg-gray-700 hidden" />
         </NavLink>
 
@@ -71,7 +75,9 @@ const Navbar = () => {
           {token && (
             <div className="group-hover:block hidden absolute dropdown-menu right-0 pt-4">
               <div className="flex flex-col gap-2 w-36 py-3 px-5 bg-slate-100 text-gray-500 rounded">
-                <p className="cursor-pointer hover:text-black">My Profile</p>
+                <p onClick={() => navigate("/profile")} className="cursor-pointer hover:text-black">My Profile</p>
+                <p onClick={() => navigate("/wardrobe")} className="cursor-pointer hover:text-black">My Wardrobe</p>
+                <p onClick={() => navigate("/swaps")} className="cursor-pointer hover:text-black">Swap Requests</p>
                 <p
                   onClick={() => navigate("/orders")}
                   className="cursor-pointer hover:text-black"
@@ -128,10 +134,19 @@ const Navbar = () => {
           <NavLink
             onClick={() => setVisible(false)}
             className="py-2 pl-6 border"
-            to="/collection"
+            to="/marketplace"
           >
-            COLLECTION
+            SWAP CLOSET
           </NavLink>
+          <NavLink onClick={() => setVisible(false)} className="py-2 pl-6 border" to="/collection">SHOP</NavLink>
+          {token && (
+            <>
+              <NavLink onClick={() => setVisible(false)} className="py-2 pl-6 border" to="/profile">MY PROFILE</NavLink>
+              <NavLink onClick={() => setVisible(false)} className="py-2 pl-6 border" to="/wardrobe">MY WARDROBE</NavLink>
+              <NavLink onClick={() => setVisible(false)} className="py-2 pl-6 border" to="/swaps">SWAP REQUESTS</NavLink>
+              <button onClick={() => { setVisible(false); handleLogout(); }} className="py-2 pl-6 text-left border">LOG OUT</button>
+            </>
+          )}
           <NavLink
             onClick={() => setVisible(false)}
             className="py-2 pl-6 border"

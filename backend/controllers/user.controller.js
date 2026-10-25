@@ -11,7 +11,15 @@ const createToken = (id) => {
 // Route for user login
 const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const email = String(req.body.email || "").trim().toLowerCase();
+    const password = req.body.password;
+
+    if (!email || typeof password !== "string") {
+      return res.status(400).json({
+        success: false,
+        message: "Email and password are required",
+      });
+    }
 
     const user = await userModel.findOne({ email });
 
@@ -19,6 +27,13 @@ const loginUser = async (req, res) => {
       return res
         .status(400)
         .json({ success: false, message: "User not found" });
+    }
+
+    if (user.isSuspended) {
+      return res.status(403).json({
+        success: false,
+        message: "This account is suspended. Contact support for assistance.",
+      });
     }
 
     // Check if password is correct
@@ -36,6 +51,14 @@ const loginUser = async (req, res) => {
       success: true,
       message: "User logged in successfully",
       token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        city: user.city,
+        state: user.state,
+        postalCode: user.postalCode,
+      },
     });
   } catch (error) {
     console.error("Failed to log in user:", error);
@@ -49,7 +72,16 @@ const loginUser = async (req, res) => {
 // Route for user registration
 const registerUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const name = String(req.body.name || "").trim();
+    const email = String(req.body.email || "").trim().toLowerCase();
+    const password = req.body.password;
+
+    if (!name || !email || typeof password !== "string") {
+      return res.status(400).json({
+        success: false,
+        message: "Name, email, and password are required",
+      });
+    }
 
     // Check if user already exists
     const existingUser = await userModel.findOne({ email });
@@ -88,6 +120,7 @@ const registerUser = async (req, res) => {
       success: true,
       message: "User registered successfully",
       token,
+      user: { id: user._id, name: user.name, email: user.email },
     });
   } catch (error) {
     console.error("Failed to register user:", error);
@@ -105,6 +138,10 @@ const adminLogin = async (req, res) => {
 
     // Check if the user is an admin
     if (
+      !process.env.ADMIN_EMAIL ||
+      !process.env.ADMIN_PASSWORD ||
+      typeof email !== "string" ||
+      typeof password !== "string" ||
       email !== process.env.ADMIN_EMAIL ||
       password !== process.env.ADMIN_PASSWORD
     ) {
@@ -114,7 +151,9 @@ const adminLogin = async (req, res) => {
       });
     }
 
-    const token = jwt.sign(email + password, process.env.JWT_SECRET);
+    const token = jwt.sign({ admin: true }, process.env.JWT_SECRET, {
+      expiresIn: "1d",
+    });
 
     res.status(200).json({
       success: true,
@@ -130,4 +169,53 @@ const adminLogin = async (req, res) => {
   }
 };
 
-export { loginUser, registerUser, adminLogin };
+const getProfile = async (req, res) => {
+  try {
+    const user = await userModel
+      .findById(req.userId)
+      .select("name email city state postalCode location createdAt");
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+    res.status(200).json({ success: true, user });
+  } catch (error) {
+    console.error("Failed to load profile:", error);
+    res.status(500).json({ success: false, message: "Unable to load profile." });
+  }
+};
+
+const updateProfile = async (req, res) => {
+  try {
+    const { name, city, state, postalCode, latitude, longitude } = req.body;
+    const update = {};
+    if (typeof name === "string") update.name = name.trim();
+    if (typeof city === "string") update.city = city.trim();
+    if (typeof state === "string") update.state = state.trim();
+    if (typeof postalCode === "string") update.postalCode = postalCode.trim();
+
+    if (latitude !== undefined || longitude !== undefined) {
+      const lat = Number(latitude);
+      const lng = Number(longitude);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+        return res.status(400).json({
+          success: false,
+          message: "Enter valid latitude and longitude coordinates",
+        });
+      }
+      update.location = { latitude: lat, longitude: lng };
+    }
+
+    const user = await userModel
+      .findByIdAndUpdate(req.userId, { $set: update }, { new: true, runValidators: true })
+      .select("name email city state postalCode location createdAt");
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+    res.status(200).json({ success: true, user });
+  } catch (error) {
+    console.error("Failed to update profile:", error);
+    res.status(500).json({ success: false, message: "Unable to update profile." });
+  }
+};
+
+export { loginUser, registerUser, adminLogin, getProfile, updateProfile };

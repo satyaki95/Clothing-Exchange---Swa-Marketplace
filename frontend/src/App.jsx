@@ -8,6 +8,10 @@ import Cart from "./pages/Cart";
 import Login from "./pages/Login";
 import PlaceOrder from "./pages/PlaceOrder";
 import Orders from "./pages/Orders";
+import Marketplace from "./pages/Marketplace";
+import Wardrobe from "./pages/Wardrobe";
+import Profile from "./pages/Profile";
+import Swaps from "./pages/Swaps";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import SearchBar from "./components/SearchBar";
@@ -39,6 +43,10 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/place-order" element={<PlaceOrder />} />
         <Route path="/orders" element={<Orders />} />
+        <Route path="/marketplace" element={<Marketplace />} />
+        <Route path="/wardrobe" element={<Wardrobe />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/swaps" element={<Swaps />} />
       </Routes>
       <Footer />
     </div>
