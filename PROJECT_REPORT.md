@@ -1,203 +1,427 @@
-# Swa Marketplace — Project Report
+﻿# Swa Marketplace — Project Report
 
 **Prepared:** October 26, 2026  
 **Project:** Clothing Exchange / Swa Marketplace  
-**Repository:** `satyaki95/Clothing-Exchange---Swa-Marketplace`
+**Repository:** satyaki95/Clothing-Exchange---Swa-Marketplace
 
-## 1. Executive summary
+## 1. Executive Summary
 
-Swa Marketplace is a clothing resale and peer-to-peer exchange application. It consists of three separately run applications:
+Swa Marketplace is a clothing resale and peer-to-peer exchange platform that combines traditional e-commerce with community-driven fashion trading. The application supports browsing catalog products, listing personal clothing items for sale, discovering nearby listings, request swaps, messaging fellow members, and placing orders for both new and community listings.
 
-1. A React storefront for browsing catalog products and community clothing listings.
-2. A React admin panel for marketplace oversight and moderation.
-3. An Express API backed by MongoDB/Mongoose, with Cloudinary image storage and Stripe/Razorpay payment integrations.
+The repository includes three major runtime components:
 
-Members can manage profiles and listings, discover clothing by category, size, condition, city, or distance, request swaps, message swap participants, and buy community listings. The storefront also retains a conventional product-cart/order flow. Administrators can review marketplace metrics, suspend members, remove listings, and resolve swap disputes.
+1. frontend/: customer storefront built with React and Vite
+2. admin/: administrator dashboard built with React and Vite
+3. backend/: Express API connected to MongoDB, Cloudinary, Stripe, and Razorpay
 
-## 2. Technology and repository layout
+The project is designed for a marketplace with three core roles:
 
-| Area | Implementation | Main location |
+- Member/customer: browse products, add to cart, create listings, manage wardrobe, find nearby items, and place orders
+- Seller/owner: publish listings, manage inventory, fulfill orders, and respond to swap activity
+- Administrator: monitor platform health, manage users, review listings, and oversee swaps/disputes
+
+The codebase is structurally well organized and includes modular routes, controllers, models, middleware, and separate frontends. The core product flow is present and functional, making it a solid full-stack project foundation.
+
+## 2. Project Objectives
+
+The primary goal of Swa Marketplace is to create a frictionless clothing exchange ecosystem where users can:
+
+- purchase catalog items using a conventional storefront and cart flow
+- sell or exchange private wardrobe items in a community marketplace
+- discover listings by category, size, condition, city, and distance
+- propose swaps and negotiate with other members
+- track order and seller fulfillment activity
+- manage profile and location data
+- allow administrators to moderate disputes, listings, and users
+
+The platform blends an online shopping model with a local clothing marketplace model, giving it both e-commerce and peer-to-peer commerce behavior.
+
+## 3. Repository Layout
+
+| Area | Purpose | Main location |
 | --- | --- | --- |
-| Storefront | React 19, Vite, React Router, Tailwind CSS, Axios | `frontend/` |
-| Admin UI | React 19, Vite, React Router, Tailwind CSS, Axios | `admin/` |
-| API | Node.js ES modules, Express 5 | `backend/` |
-| Database | MongoDB via Mongoose | `backend/config/mongodb.js`, `backend/models/` |
-| Authentication | JWT; bcrypt-hashed member passwords | `backend/middleware/`, `backend/controllers/user.controller.js` |
-| Product/listing images | Cloudinary; Multer handles listing uploads | `backend/config/cloudinary.js`, `backend/middleware/multer.js` |
-| Online payments | Stripe Checkout and Razorpay Orders/Payments | `backend/controllers/order.controller.js` |
+| Storefront | Customer-facing shopping and listing UI | frontend/ |
+| Admin | Platform moderation and dashboard UI | admin/ |
+| API | Business logic, persistence, orders, payments | backend/ |
+| Data models | MongoDB entities and schema definitions | backend/models/ |
+| Routes | HTTP API route definitions | backend/routes/ |
+| Controllers | Request handling and logic | backend/controllers/ |
+| Middleware | Auth, uploads, optional auth | backend/middleware/ |
+| Config | DB and Cloudinary connections | backend/config/ |
 
-Key source areas:
+## 4. Technology Stack
 
-- `frontend/src/pages/` contains member-facing screens.
-- `frontend/src/components/` contains shared storefront UI.
-- `frontend/src/context/ShopContext.jsx` manages storefront authentication, product/cart state, and API access.
-- `admin/src/pages/Management.jsx` renders the admin dashboard and management views.
-- `backend/routes/` maps HTTP endpoints to controllers.
-- `backend/controllers/` implements application workflows.
-- `backend/models/` defines MongoDB document schemas.
+### Frontend and Admin UI
 
-## 3. Applications and user-facing capabilities
+- React 19
+- Vite
+- React Router DOM
+- Tailwind CSS
+- Axios
+- React Toastify
+- ESLint
 
-### Storefront
+### Backend
 
-The storefront has two related shopping/discovery experiences:
+- Node.js
+- Express 5
+- MongoDB via Mongoose
+- JWT-based authentication
+- bcrypt password hashing
+- Multer upload handling
+- Cloudinary image storage
+- Stripe Checkout integration
+- Razorpay integration
 
-- **Catalog shopping:** Existing products can be browsed, added to a cart with a size and quantity, checked out, and viewed in order history.
-- **Community marketplace:** Members publish clothing listings, browse other members’ available listings, filter by city/category/size/condition, and optionally find listings within a distance radius using saved coordinates.
-- **Swaps:** A member proposes one of their listings in exchange for another listing. Participants can respond, exchange messages, confirm completion, or report a dispute.
-- **Direct listing purchase:** A community listing can be bought with cash on delivery, Stripe, or Razorpay. Online purchases reserve the listing temporarily while payment is pending.
-- **Member profile:** Name, city, state, postal code, and optional latitude/longitude are managed through the profile.
-- **Listing valuation:** A value estimate uses the supplied buying price when available, adjusted for brand and condition. Older listings without a buying price can use category-based base values.
-- **Order fulfillment:** Buyers view their orders and listing-purchase tracking. Listing owners can progress eligible orders through shipped and delivered.
+### Runtime configuration
 
-The primary customer-facing routes are declared in `frontend/src/App.jsx`, including `/collection`, `/marketplace`, `/store`, `/cart`, `/orders`, `/seller-orders`, `/profile`, `/wardrobe`, `/swaps`, and listing detail/checkout routes.
+- Separate frontend and admin apps run independently
+- Local defaults are configured as:
+  - Storefront: http://localhost:5173
+  - Admin: http://localhost:5174
+  - Backend: http://localhost:4000
 
-### Admin panel
+## 5. Functional Scope
 
-The admin UI has a dashboard, member management, listing moderation, and swap/dispute management:
+### 5.1 Storefront capabilities
 
-- Dashboard counters include members, listings, available listings, swaps, completed swaps, and open disputes.
-- Members can be suspended or restored.
-- Marketplace listings can be removed from public availability.
-- Active swap activity and disputes can be reviewed; a dispute resolution requires an outcome and a note.
+The storefront provides a complete buyer and seller experience:
 
-Admin routes are declared in `admin/src/App.jsx`. The UI currently has pages for `/dashboard`, `/users`, `/listings`, and `/swaps`; the sidebar is in `admin/src/components/Sidebar.jsx`.
+- browse products in a catalog-driven shopping flow
+- view product pages and related product suggestions
+- add products to cart and manage quantities
+- checkout with COD, Stripe, or Razorpay
+- inspect order history and current order status
+- create wardrobe listings with images and metadata
+- browse available community listings by city/category/size/condition
+- use nearby-search filters with location-aware radius checks
+- request swaps between listings
+- message swap participants and resolve disputes
+- manage profile details including city/state and coordinates
 
-### App-to-app navigation
+### 5.2 Admin capabilities
 
-The storefront and admin panel are independent web apps. The storefront includes an Admin link; the admin app includes links back to the storefront from its header and login screen. The links clear the current app’s saved token before switching. Local defaults are `http://localhost:5173` for the storefront and `http://localhost:5174` for admin; deployments can override these using Vite environment variables.
+The admin app is a dedicated moderation dashboard with views for:
 
-## 4. Backend architecture and API
+- summary/statistical overview
+- member management
+- listing moderation
+- swap monitoring and dispute resolution
+- user suspension/restoration
+- content approval and removal workflows
 
-The API entry point is `backend/server.js`. It initializes the database and Cloudinary configuration, enables JSON request parsing and CORS, mounts route modules, and listens on `PORT` (default `4000`).
+The admin application is structured with a login screen, navbar, sidebar, and a single management page controlling different sections.
 
-### Route groups
+### 5.3 Backend capabilities
+
+The backend is the operational core for the marketplace and exposes APIs for:
+
+- user registration and login
+- admin login
+- profile read/update
+- catalog product listing
+- cart creation and updates
+- order placement and verification
+- community listing creation and management
+- nearby listing discovery
+- swap creation and negotiation
+- message exchange between swap participants
+- admin moderation and metrics
+
+## 6. Application Architecture
+
+### Frontend architecture
+
+The storefront is a React single-page app with route-based screens. The main route definitions in frontend/src/App.jsx include:
+
+| Route | Purpose |
+| --- | --- |
+| / | Home page |
+| /collection, /shop, /store | Product and listing discovery |
+| /product/:productId | Product detail view |
+| /cart | Cart and checkout entry |
+| /login | Login page |
+| /place-order | Checkout |
+| /orders | User order history |
+| /seller-orders | Seller fulfillment view |
+| /marketplace | Community listing marketplace |
+| /listing/:listingId | Listing detail page |
+| /listing/:listingId/checkout | Listing purchase checkout |
+| /wardrobe | User listing inventory |
+| /profile | User profile |
+| /swaps | Swap management |
+| /about | About page |
+| /contact | Contact page |
+
+The frontend/src/context/ShopContext.jsx is the main state container for storefront auth, cart processing, listing interactions, and shared API access.
+
+### Admin app architecture
+
+The admin app is a separate React project. It stores the admin token in localStorage and routes to dashboard sections such as:
+
+- /dashboard
+- /users
+- /listings
+- /swaps
+
+The app conditionally renders a login form if no admin token is present; otherwise it displays the main admin navigation and management screen.
+
+### Backend architecture
+
+The API entry point is backend/server.js. It configures:
+
+- Express app
+- JSON parsing
+- CORS
+- MongoDB connection
+- Cloudinary configuration
+- route mounting for major modules
+
+The root API mounts these route groups:
 
 | Prefix | Representative endpoints | Purpose |
 | --- | --- | --- |
-| `/api/user` | `POST /register`, `POST /login`, `POST /admin`, `GET/PUT /profile` | Member registration/login, admin login, profile |
-| `/api/product` | `GET /list`, `GET /single/:id` | Existing catalog products |
-| `/api/cart` | `POST /get`, `POST /add`, `PUT /update`, `/listing/*` | Product and listing cart operations |
-| `/api/order` | `/place`, `/stripe`, `/razorpay`, `/user-orders`, `/seller-orders`, `/listing/*` | Checkout, payment verification, order history, fulfillment |
-| `/api/listings` | `GET /`, `/nearby`, `/mine`; `POST /`, `PUT/DELETE /:id`; `POST /estimate` | Listing discovery, authoring, management, and estimates |
-| `/api/swaps` | `GET/POST /`, `PATCH /:id/respond`, `/confirm`, `POST /:id/dispute`, `GET/POST /:id/messages` | Swap lifecycle, negotiation, and disputes |
-| `/api/admin` | `/summary`, `/users`, `/listings`, `/swaps` and moderation mutations | Admin-only reporting and moderation |
+| /api/user | /register, /login, /admin, /profile | member registration, auth, profile |
+| /api/product | /list, /single/:id | catalog products |
+| /api/cart | /get, /add, /update, /listing/* | cart management |
+| /api/order | /place, /stripe, /razorpay, /user-orders | checkout and payment flow |
+| /api/listings | /, /mine, /nearby, /:id | listing discovery and management |
+| /api/swaps | /, /:id/respond, /:id/messages | swap lifecycle and chat |
+| /api/admin | /summary, /users, /listings, /swaps | admin workflows and moderation |
 
-Member-protected endpoints use the `token` request header and `authUser` middleware. Admin endpoints use `adminAuth`, which requires a JWT with the admin claim. The admin login endpoint issues that claim after comparing credentials with the configured admin environment variables.
+## 7. Route and API Summary
 
-### Main data entities
+### User routes
 
-| Model | Purpose and relationships |
-| --- | --- |
-| `User` | Member credentials/profile, suspension flag, product cart, listing cart, and optional geographic coordinates |
-| `Product` | Existing catalog product used by the traditional shopping cart |
-| `Listing` | Member-owned clothing listing with images, category, size, condition, optional buying price, estimated value, status, and reservation references |
-| `Swap` | Proposed exchange between two users and two listings; includes lifecycle status, confirmations, and dispute resolution data |
-| `Message` | Negotiation messages associated with swaps and their participants |
-| `Order` | Catalog-cart or community-listing purchase, delivery address, payment method/status, order status, and gateway references |
+backend/routes/user.route.js exposes:
 
-Listings are associated with owners and can be available, reserved, swapped, sold, or removed. Swap records reference offering/requesting users and listings. Orders can reference either catalog products or community listings and identify their origin with the `source` field.
+- POST /api/user/register
+- POST /api/user/login
+- POST /api/user/admin
+- GET /api/user/profile
+- PUT /api/user/profile
 
-## 5. Key business workflows
+### Listing routes
 
-### Listing publication and discovery
+backend/routes/listing.route.js exposes:
 
-1. A signed-in member creates a listing and uploads up to five images.
-2. The backend computes or accepts the listing valuation using the project’s valuation utility.
-3. Public browsing returns available listings and owner display details. Buying price is intended for the owner’s own wardrobe view rather than the public listing response.
-4. City filtering is case-insensitive and matches a partial city string. Nearby filtering calculates distances from member coordinates and returns rounded distances.
+- POST /api/listings/estimate
+- GET /api/listings/
+- GET /api/listings/nearby
+- GET /api/listings/mine
+- GET /api/listings/:id
+- POST /api/listings/
+- PUT /api/listings/:id
+- DELETE /api/listings/:id
+
+### Order routes
+
+backend/routes/order.route.js exposes:
+
+- POST /api/order/place (COD)
+- POST /api/order/stripe
+- POST /api/order/stripe/verify
+- POST /api/order/razorpay
+- POST /api/order/razorpay/verify
+- POST /api/order/user-orders
+- GET /api/order/seller-orders
+- PATCH /api/order/seller-orders/:orderId/status
+- POST /api/order/listing/place
+- POST /api/order/listing/stripe
+- POST /api/order/listing/razorpay
+- POST /api/order/listing/:orderId/cancel
+
+### Swap routes
+
+backend/routes/swap.route.js exposes:
+
+- GET /api/swaps/
+- POST /api/swaps/
+- PATCH /api/swaps/:id/respond
+- PATCH /api/swaps/:id/confirm
+- POST /api/swaps/:id/dispute
+- GET /api/swaps/:id/messages
+- POST /api/swaps/:id/messages
+
+## 8. Main Data Models
+
+The platform uses MongoDB models around several core entities.
+
+### User
+
+The User model stores:
+
+- account credentials and profile data
+- suspended/active state
+- member type and role information
+- location fields such as city/state and coordinate data
+- cart state and listing-related references
+
+### Product
+
+Used for the catalog shopping flow, including product images, pricing, category metadata, and inventory configuration.
+
+### Listing
+
+The Listing model represents member-owned clothing items and includes:
+
+- images and media URLs
+- title, description, category, size, and condition
+- buying price and estimated value
+- owner reference
+- listing status and reservation metadata
+
+### Swap
+
+The Swap model supports a peer-to-peer fashion exchange and includes:
+
+- offering user and requested user
+- offered and requested listings
+- confirmation and status state
+- dispute resolution metadata
+
+### Order
+
+The Order model supports both standard-product purchases and community-listing transactions, with:
+
+- source (catalog or listing)
+- buyer and seller references
+- payment method and gateway details
+- delivery address information
+- order status and fulfillment state
+
+## 9. Business Workflows
+
+### Catalog shopping workflow
+
+1. A user browses products in the storefront.
+2. Products are added to the cart with selected variants and quantities.
+3. The cart is checked out using COD, Stripe, or Razorpay.
+4. Order verification completes once the payment or COD confirmation is accepted.
+5. The user sees the purchase in their order history.
+
+### Community marketplace workflow
+
+1. A member creates a listing with up to five images.
+2. The listing is stored with pricing and item metadata.
+3. Other users browse the listing marketplace and apply filters.
+4. A user may request a swap or buy a listing directly.
+5. The seller can fulfill or reject the order or swap action.
 
 ### Swap lifecycle
 
-1. An authenticated member submits an offered listing and a requested listing.
-2. Participants respond and can message each other while the exchange is active.
-3. The exchange can be confirmed by participants or escalated to a dispute.
-4. An administrator resolves a dispute as completed or cancelled and the related listing statuses are updated.
+1. A user chooses an item they own and an item they want.
+2. A swap offer is created.
+3. The counterpart can respond or negotiate through messages.
+4. The swap can be confirmed or escalated to a dispute.
+5. Admin can review and resolve disputes.
 
-### Purchase and payment
-
-- Traditional cart orders support COD, Stripe, and Razorpay.
-- Community listing checkout supports the same methods and adds the configured ₹10 delivery fee to the estimated listing value.
-- Stripe returns a Checkout Session ID to the storefront, which calls the API to verify the session before marking the order paid.
-- Razorpay verification checks the payment signature and compares gateway order/payment amounts and currency before marking the order paid.
-- Cart clearing is intended to happen only after COD order placement or successful online payment verification. The user order-history query includes COD orders and successfully paid online orders, not unpaid payment attempts.
-- Community listing online checkout reserves the listing for up to 35 minutes. Expired reservations are released by listing/order workflow logic.
-
-## 6. Local setup
+## 10. Local Setup
 
 ### Prerequisites
 
-- A supported Node.js runtime and npm.
-- MongoDB reachable using the configured URI.
-- Cloudinary credentials for listing image uploads.
-- Stripe and/or Razorpay credentials for the corresponding online checkout method.
+- Node.js and npm
+- MongoDB instance accessible from the backend
+- Cloudinary account and keys
+- Stripe credentials
+- Razorpay credentials
 
-### Environment configuration
+### Backend
 
-Create the required environment files locally; do not commit credentials.
-
-**`backend/.env`**
-
-| Variable | Use |
-| --- | --- |
-| `PORT` | API port; defaults to `4000` |
-| `MONGODB_URI` | MongoDB connection URI; the connection module appends `/e-commerce` |
-| `JWT_SECRET` | Signs and verifies member/admin tokens |
-| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Admin login credentials |
-| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Image storage configuration |
-| `STRIPE_SECRET_KEY` | Stripe Checkout and verification |
-| `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` | Razorpay API and payment verification |
-
-Razorpay key ID and secret must come from the same Razorpay account. Use gateway test credentials during development.
-
-**`frontend/.env`**
-
-- `VITE_BACKEND_URL`: API base URL.
-- `VITE_ADMIN_URL`: Optional admin app URL; defaults to `http://localhost:5174`.
-
-**`admin/.env`**
-
-- `VITE_BACKEND_URL`: API base URL.
-- `VITE_STORE_URL`: Optional storefront URL; defaults to `http://localhost:5173`.
-
-### Run the services
-
-Open a terminal in each directory and run:
-
-```powershell
-# backend
+```bash
+cd backend
+npm install
 npm run server
+```
 
-# storefront
-npm run dev
+The backend server boots from server.js and listens on PORT or defaults to 4000.
 
-# admin
+### Frontend
+
+```bash
+cd frontend
+npm install
 npm run dev
 ```
 
-The Vite configurations set the storefront to port `5173` and admin to port `5174`. The backend uses port `4000` unless overridden.
+### Admin
 
-### Build and lint
+```bash
+cd admin
+npm install
+npm run dev
+```
 
-From `frontend` or `admin`:
+### Build checks
 
-```powershell
+```bash
+cd frontend
 npm run build
 npm run lint
 ```
 
-The backend package currently exposes `npm start` and `npm run server`; no dedicated backend test or lint script is declared in its package manifest.
+```bash
+cd admin
+npm run build
+npm run lint
+```
 
-## 7. Operational and implementation notes
+## 11. Environment Configuration
 
-- The storefront, admin app, and API are separate processes and should be configured with the correct URLs for each environment.
-- The API currently enables CORS without an explicit origin allowlist. Production deployments should configure allowed origins deliberately.
-- Tokens are stored in browser `localStorage` by the client apps and sent in a request header. Admin and storefront run on different origins when using the local port defaults, so their browser storage is separate.
-- Admin account credentials are checked against environment variables. Keep those values strong and private, and protect deployment secrets.
-- Payment integrations require valid provider settings and network access. A missing or invalid gateway configuration prevents the related checkout from starting.
-- The database connection explicitly selects the `e-commerce` database by appending that name to `MONGODB_URI`.
-- No automated test files were found in the application source directories during this report’s review. The frontend/admin package manifests provide build and lint scripts; the backend manifest does not define a test script.
+The app expects these environment settings:
 
-## 8. Report scope
+| Variable | Use |
+| --- | --- |
+| PORT | Backend listening port |
+| MONGODB_URI | MongoDB connection string |
+| JWT_SECRET | Token signing/verification |
+| CLOUDINARY_CLOUD_NAME | image storage account |
+| CLOUDINARY_API_KEY | Cloudinary API auth |
+| CLOUDINARY_API_SECRET | Cloudinary secret |
+| STRIPE_SECRET_KEY | Stripe payment verification |
+| RAZORPAY_KEY_ID | Razorpay client credential |
+| RAZORPAY_KEY_SECRET | Razorpay secret |
+| VITE_BACKEND_URL | Frontend/admin API base URL |
+| VITE_STORE_URL | Admin redirect to storefront |
 
-This report describes the repository implementation and setup as inspected on October 26, 2026. It is a codebase overview, not a production-readiness certification, security audit, or verification of live payment, database, or Cloudinary credentials.
+Important: do not commit real secrets to version control. Production deployments should use environment-specific secret stores.
+
+## 12. Deployment Notes
+
+The project is built as a multi-app architecture with separate frontend, admin, and backend services. This is suitable for deployment on a host platform such as Vercel, Render, Railway, or a custom Node environment.
+
+Operational deployment concerns include:
+
+- CORS restrictions for approved origins
+- secure environment variable management
+- Cloudinary upload validation and quotas
+- payment verification for Stripe and Razorpay
+- MongoDB connectivity and startup health checks
+- proper routing for deep links in the frontend/admin apps
+
+## 13. Current Strengths
+
+- Clear separation between storefront, admin, and backend
+- Feature-rich marketplace flow spanning shopping, listing, swap, and moderation
+- Modular structure makes business logic easy to extend
+- Payment integrations are present for both online and offline checkout paths
+- Multiple user roles are represented in both the API and UI
+
+## 14. Recommended Improvements
+
+Before production launch, the project should prioritize:
+
+1. strong authorization checks on listing and order ownership
+2. validation for uploads and file types
+3. consistent role enforcement for public/admin-only actions
+4. secure handling of secrets and environment values
+5. anti-abuse controls on authentication and payment endpoints
+6. test coverage for flows such as checkout, swaps, and admin moderation
+7. consistent cleanup for deleted listings, orders, and user references
+8. rate limiting and request-size controls
+
+## 15. Conclusion
+
+Swa Marketplace is a substantial full-stack clothing exchange project with a realistic business model and a clear technical architecture. It combines catalog commerce, community listings, swaps, order processing, and admin moderation in a way that is coherent and extendable.
+
+The current repository demonstrates a strong base implementation and a practical product direction. With production-focused hardening around auth, payment safety, file validation, and deployment configuration, it can evolve into a reliable marketplace platform for buying, selling, and swapping clothing.
