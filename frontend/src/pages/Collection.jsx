@@ -177,6 +177,7 @@ const Collection = () => {
               id={item._id}
               image={item.image}
               price={item.price}
+              sizes={item.sizes}
             />
           ))}
         </div>
