@@ -4,6 +4,8 @@ import { backendUrl } from "../App";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 
+const storefrontUrl = "https://clothing-exchange-frontend.vercel.app";
+
 const Login = ({ setToken }) => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -68,6 +70,16 @@ const Login = ({ setToken }) => {
             Login
           </button>
         </form>
+        <a
+          href={storefrontUrl}
+          onClick={() => {
+            localStorage.removeItem("token");
+            setToken("");
+          }}
+          className="mt-4 block text-center text-sm text-gray-600 underline hover:text-black"
+        >
+          Visit storefront
+        </a>
       </div>
     </div>
   );

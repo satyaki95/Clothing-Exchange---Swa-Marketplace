@@ -66,7 +66,9 @@ const listListings = async (req, res) => {
 
     if (city) {
       const normalizedCity = String(city).trim().toLowerCase();
-      listings = listings.filter((item) => item.owner?.city?.toLowerCase() === normalizedCity);
+      listings = listings.filter((item) =>
+        item.owner?.city?.trim().toLowerCase().includes(normalizedCity),
+      );
     }
     if (req.query.nearby === "true") {
       const user = await userModel.findById(req.userId).select("location");

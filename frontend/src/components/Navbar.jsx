@@ -3,6 +3,8 @@ import { assets } from "../assets/assets";
 import { Link, NavLink } from "react-router-dom";
 import { ShopContext } from "../context/ShopContext";
 
+const adminUrl = "https://clothing-exchange-admin.vercel.app";
+
 const Navbar = () => {
   const [visible, setVisible] = useState(false);
   const {
@@ -22,6 +24,13 @@ const Navbar = () => {
     setCartItems({});
     setListingCartItems([]);
     navigate("/login");
+  };
+
+  const openAdmin = () => {
+    localStorage.removeItem("token");
+    setToken("");
+    setCartItems({});
+    setListingCartItems([]);
   };
 
   return (
@@ -50,6 +59,13 @@ const Navbar = () => {
           <p>CONTACT</p>
           <hr className="w-2/4 border-none h-[1.5px] bg-gray-700 hidden" />
         </NavLink>
+        <a
+          href={adminUrl}
+          onClick={openAdmin}
+          className="flex flex-col items-center gap-1"
+        >
+          <p>ADMIN</p>
+        </a>
       </ul>
 
       <div className="flex items-center gap-6">
@@ -73,10 +89,30 @@ const Navbar = () => {
           {token && (
             <div className="group-hover:block hidden absolute dropdown-menu right-0 pt-4">
               <div className="flex flex-col gap-2 w-36 py-3 px-5 bg-slate-100 text-gray-500 rounded">
-                <p onClick={() => navigate("/profile")} className="cursor-pointer hover:text-black">My Profile</p>
-                <p onClick={() => navigate("/wardrobe")} className="cursor-pointer hover:text-black">My Wardrobe</p>
-                <p onClick={() => navigate("/swaps")} className="cursor-pointer hover:text-black">Swap Requests</p>
-                <p onClick={() => navigate("/seller-orders")} className="cursor-pointer hover:text-black">Sales & Fulfillment</p>
+                <p
+                  onClick={() => navigate("/profile")}
+                  className="cursor-pointer hover:text-black"
+                >
+                  My Profile
+                </p>
+                <p
+                  onClick={() => navigate("/wardrobe")}
+                  className="cursor-pointer hover:text-black"
+                >
+                  My Wardrobe
+                </p>
+                <p
+                  onClick={() => navigate("/swaps")}
+                  className="cursor-pointer hover:text-black"
+                >
+                  Swap Requests
+                </p>
+                <p
+                  onClick={() => navigate("/seller-orders")}
+                  className="cursor-pointer hover:text-black"
+                >
+                  Sales & Fulfillment
+                </p>
                 <p
                   onClick={() => navigate("/orders")}
                   className="cursor-pointer hover:text-black"
@@ -139,12 +175,50 @@ const Navbar = () => {
           </NavLink>
           {token && (
             <>
-              <NavLink onClick={() => setVisible(false)} className="py-2 pl-6 border" to="/profile">MY PROFILE</NavLink>
-              <NavLink onClick={() => setVisible(false)} className="py-2 pl-6 border" to="/wardrobe">MY WARDROBE</NavLink>
-              <NavLink onClick={() => setVisible(false)} className="py-2 pl-6 border" to="/swaps">SWAP REQUESTS</NavLink>
-              <NavLink onClick={() => setVisible(false)} className="py-2 pl-6 border" to="/seller-orders">SALES & FULFILLMENT</NavLink>
-              <NavLink onClick={() => setVisible(false)} className="py-2 pl-6 border" to="/orders">MY ORDERS</NavLink>
-              <button onClick={() => { setVisible(false); handleLogout(); }} className="py-2 pl-6 text-left border">LOG OUT</button>
+              <NavLink
+                onClick={() => setVisible(false)}
+                className="py-2 pl-6 border"
+                to="/profile"
+              >
+                MY PROFILE
+              </NavLink>
+              <NavLink
+                onClick={() => setVisible(false)}
+                className="py-2 pl-6 border"
+                to="/wardrobe"
+              >
+                MY WARDROBE
+              </NavLink>
+              <NavLink
+                onClick={() => setVisible(false)}
+                className="py-2 pl-6 border"
+                to="/swaps"
+              >
+                SWAP REQUESTS
+              </NavLink>
+              <NavLink
+                onClick={() => setVisible(false)}
+                className="py-2 pl-6 border"
+                to="/seller-orders"
+              >
+                SALES & FULFILLMENT
+              </NavLink>
+              <NavLink
+                onClick={() => setVisible(false)}
+                className="py-2 pl-6 border"
+                to="/orders"
+              >
+                MY ORDERS
+              </NavLink>
+              <button
+                onClick={() => {
+                  setVisible(false);
+                  handleLogout();
+                }}
+                className="py-2 pl-6 text-left border"
+              >
+                LOG OUT
+              </button>
             </>
           )}
           <NavLink
@@ -161,6 +235,16 @@ const Navbar = () => {
           >
             CONTACT
           </NavLink>
+          <a
+            href={adminUrl}
+            onClick={() => {
+              setVisible(false);
+              openAdmin();
+            }}
+            className="py-2 pl-6 border"
+          >
+            ADMIN
+          </a>
         </div>
       </div>
     </div>
