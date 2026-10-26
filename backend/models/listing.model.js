@@ -19,6 +19,7 @@ const listingSchema = new mongoose.Schema(
       required: true,
       enum: ["New with tags", "Like new", "Good", "Fair"],
     },
+    buyingPrice: { type: Number, min: 0 },
     estimatedValue: { type: Number, required: true, min: 0 },
     status: {
       type: String,

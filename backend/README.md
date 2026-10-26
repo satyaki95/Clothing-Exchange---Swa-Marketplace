@@ -19,7 +19,7 @@ Protected member routes use the `token` request header returned from `/api/user/
 | `GET /api/listings/nearby?nearby=true&maxDistance=50` | Filter listings to a radius in kilometres around the member's saved coordinates |
 | `GET /api/listings/mine`, `POST /api/listings/` | Manage personal listings and upload images |
 | `PUT /api/listings/:id`, `DELETE /api/listings/:id` | Edit or remove an available personal listing |
-| `POST /api/listings/estimate` | Estimate a value from category, brand, and condition |
+| `POST /api/listings/estimate` | Estimate a swap value from buying price, brand, and condition; category remains the fallback when no buying price is supplied |
 | `GET /api/swaps`, `POST /api/swaps` | View swap history or request an exchange |
 | `PATCH /api/swaps/:id/respond`, `PATCH /api/swaps/:id/confirm` | Accept/reject a request or confirm completion |
 | `GET/POST /api/swaps/:id/messages` | Read or send negotiation messages |
@@ -33,4 +33,4 @@ Admin routes are under `/api/admin` and require a token from `POST /api/user/adm
 
 Buyer order history includes the listing owner and the seller who last updated its shipping status. Listing owners can update eligible orders in Sales & Fulfillment; each status change is recorded on the order. The public `/api/product/list` and `/api/product/single` endpoints continue to support the existing storefront catalog. Cart, checkout, payment verification, and member order-history routes remain available. Admin order listing/status updates and legacy store-product deletion endpoints have been removed with their admin screens.
 
-Community listing purchases use the estimated swap value as the item price plus the existing ₹10 delivery charge. Online checkouts reserve the listing for up to 35 minutes; COD orders mark the listing sold when placed.
+Community listing purchases use the estimated swap value as the item price plus the existing ₹10 delivery charge. A member's buying price is returned only in their own wardrobe; public listings expose the estimated swap value, not the buying price. New listings require a non-negative buying price, and their swap estimate applies the existing brand and condition multipliers to that price. Older listings without a buying price retain category-based estimates. Online checkouts reserve the listing for up to 35 minutes; COD orders mark the listing sold when placed.

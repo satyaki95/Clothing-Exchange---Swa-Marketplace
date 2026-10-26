@@ -5,6 +5,18 @@ import userModel from "../models/user.model.js";
 import estimateSwapValue from "../utils/swapValue.js";
 
 const publicListingFields = "title description images category size brand condition estimatedValue status owner createdAt";
+const memberListingFields = `${publicListingFields} buyingPrice`;
+
+const parseBuyingPrice = (value) => {
+  if (
+    (typeof value !== "string" && typeof value !== "number") ||
+    String(value).trim() === ""
+  ) {
+    return null;
+  }
+  const buyingPrice = Number(value);
+  return Number.isFinite(buyingPrice) && buyingPrice >= 0 ? buyingPrice : null;
+};
 
 const releaseExpiredPurchaseReservations = async () => {
   const expired = await listingModel
@@ -105,7 +117,7 @@ const getMyListings = async (req, res) => {
   try {
     const listings = await listingModel
       .find({ owner: req.userId })
-      .select(publicListingFields)
+      .select(memberListingFields)
       .sort({ createdAt: -1 });
     res.status(200).json({ success: true, listings });
   } catch (error) {
@@ -145,6 +157,13 @@ const createListing = async (req, res) => {
         message: "Title, description, category, size, and condition are required",
       });
     }
+    const buyingPrice = parseBuyingPrice(req.body.buyingPrice);
+    if (buyingPrice === null) {
+      return res.status(400).json({
+        success: false,
+        message: "Enter a valid buying price of zero or more",
+      });
+    }
     if (!["New with tags", "Like new", "Good", "Fair"].includes(condition)) {
       return res.status(400).json({ success: false, message: "Choose a valid condition" });
     }
@@ -169,7 +188,8 @@ const createListing = async (req, res) => {
       size,
       brand: brand?.trim() || "Unbranded",
       condition,
-      estimatedValue: estimateSwapValue({ category, condition, brand }),
+      buyingPrice,
+      estimatedValue: estimateSwapValue({ category, condition, brand, buyingPrice }),
     });
     res.status(201).json({ success: true, listing });
   } catch (error) {
@@ -185,6 +205,16 @@ const updateListing = async (req, res) => {
     for (const field of allowed) {
       if (typeof req.body[field] === "string") updates[field] = req.body[field].trim();
     }
+    if (req.body.buyingPrice !== undefined) {
+      const buyingPrice = parseBuyingPrice(req.body.buyingPrice);
+      if (buyingPrice === null) {
+        return res.status(400).json({
+          success: false,
+          message: "Enter a valid buying price of zero or more",
+        });
+      }
+      updates.buyingPrice = buyingPrice;
+    }
     if (updates.condition && !["New with tags", "Like new", "Good", "Fair"].includes(updates.condition)) {
       return res.status(400).json({ success: false, message: "Choose a valid condition" });
     }
@@ -196,7 +226,7 @@ const updateListing = async (req, res) => {
     if (!listing) {
       return res.status(404).json({ success: false, message: "Available listing not found" });
     }
-    if (updates.category || updates.condition || updates.brand) {
+    if (updates.category || updates.condition || updates.brand || updates.buyingPrice !== undefined) {
       listing.estimatedValue = estimateSwapValue(listing);
       await listing.save();
     }
@@ -229,9 +259,19 @@ const estimateValue = (req, res) => {
   if (!category || !condition) {
     return res.status(400).json({ success: false, message: "Category and condition are required" });
   }
+  let buyingPrice;
+  if (req.body.buyingPrice !== undefined) {
+    buyingPrice = parseBuyingPrice(req.body.buyingPrice);
+    if (buyingPrice === null) {
+      return res.status(400).json({
+        success: false,
+        message: "Enter a valid buying price of zero or more",
+      });
+    }
+  }
   res.status(200).json({
     success: true,
-    estimatedValue: estimateSwapValue({ category, condition, brand }),
+    estimatedValue: estimateSwapValue({ category, condition, brand, buyingPrice }),
   });
 };
 

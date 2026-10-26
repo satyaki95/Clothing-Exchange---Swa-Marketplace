@@ -36,8 +36,9 @@ const luxuryBrands = new Set([
   "burberry",
 ]);
 
-const estimateSwapValue = ({ category, condition, brand }) => {
-  const base = categoryBaseValue[category] || categoryBaseValue.Other;
+const estimateSwapValue = ({ category, condition, brand, buyingPrice }) => {
+  const base =
+    buyingPrice ?? categoryBaseValue[category] ?? categoryBaseValue.Other;
   const normalizedBrand = brand?.trim().toLowerCase() || "";
   const brandMultiplier = luxuryBrands.has(normalizedBrand)
     ? 1.45

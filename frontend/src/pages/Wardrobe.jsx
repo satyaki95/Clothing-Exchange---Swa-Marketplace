@@ -10,6 +10,7 @@ const initialForm = {
   size: "M",
   brand: "",
   condition: "Good",
+  buyingPrice: "",
 };
 
 const Wardrobe = () => {
@@ -20,6 +21,7 @@ const Wardrobe = () => {
   const [estimate, setEstimate] = useState(null);
   const [editingId, setEditingId] = useState("");
   const [saving, setSaving] = useState(false);
+  const buyingPrice = form.buyingPrice ?? "";
 
   const loadListings = useCallback(async () => {
     try {
@@ -42,11 +44,19 @@ const Wardrobe = () => {
 
   useEffect(() => {
     let active = true;
+    if (!buyingPrice.trim() && !editingId) {
+      return () => {
+        active = false;
+      };
+    }
     axios
       .post(`${backendUrl}/api/listings/estimate`, {
         category: form.category,
         condition: form.condition,
         brand: form.brand,
+        ...(buyingPrice.trim()
+          ? { buyingPrice: Number(buyingPrice) }
+          : {}),
       })
       .then(({ data }) => {
         if (active) setEstimate(data.estimatedValue);
@@ -57,7 +67,7 @@ const Wardrobe = () => {
     return () => {
       active = false;
     };
-  }, [backendUrl, form.brand, form.category, form.condition]);
+  }, [backendUrl, buyingPrice, editingId, form.brand, form.category, form.condition]);
 
   const updateField = (event) =>
     setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
@@ -78,6 +88,7 @@ const Wardrobe = () => {
       size: item.size,
       brand: item.brand,
       condition: item.condition,
+      buyingPrice: item.buyingPrice === undefined ? "" : String(item.buyingPrice),
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -127,7 +138,7 @@ const Wardrobe = () => {
     <main className="py-10">
       <p className="text-xs uppercase tracking-[0.25em] text-emerald-800">Your closet</p>
       <h1 className="prata-regular mt-2 text-3xl">Manage your listings</h1>
-      <p className="mt-2 text-sm text-gray-600">Add clean, clear photos and honest details so neighbors can find a fair match.</p>
+      <p className="mt-2 text-sm text-gray-600">Add clean, clear photos and honest details so neighbors can find a fair match. Your buying price is private; your estimated swap value is public.</p>
 
       <form onSubmit={submit} className="mt-7 grid gap-4 rounded-xl border border-stone-200 bg-white p-5 sm:grid-cols-2">
         <h2 className="font-medium sm:col-span-2">{editingId ? "Edit available listing" : "Add a clothing item"}</h2>
@@ -136,8 +147,9 @@ const Wardrobe = () => {
         <label className="text-sm">Category<select name="category" value={form.category} onChange={updateField} className="mt-1 w-full border border-stone-300 px-3 py-2">{["Tops", "Bottoms", "Dresses", "Outerwear", "Shoes", "Accessories", "Other"].map((item) => <option key={item}>{item}</option>)}</select></label>
         <label className="text-sm">Size<select name="size" value={form.size} onChange={updateField} className="mt-1 w-full border border-stone-300 px-3 py-2">{["XS", "S", "M", "L", "XL", "XXL", "One size"].map((item) => <option key={item}>{item}</option>)}</select></label>
         <label className="text-sm">Condition<select name="condition" value={form.condition} onChange={updateField} className="mt-1 w-full border border-stone-300 px-3 py-2">{["New with tags", "Like new", "Good", "Fair"].map((item) => <option key={item}>{item}</option>)}</select></label>
+        <label className="text-sm">Buying price (₹)<input name="buyingPrice" type="number" min="0" step="0.01" value={buyingPrice} onChange={updateField} required={!editingId || listings.find((item) => item._id === editingId)?.buyingPrice !== undefined} className="mt-1 w-full border border-stone-300 px-3 py-2" placeholder="What you paid for this item" /><span className="mt-1 block text-xs text-gray-500">Kept private. Used with brand and condition to estimate swap value.</span></label>
         <div className="flex items-center rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
-          Estimated swap value <strong className="ml-2">₹{estimate ?? "—"}</strong>
+          Estimated swap value <strong className="ml-2">₹{!buyingPrice.trim() && !editingId ? "—" : estimate ?? "—"}</strong>
         </div>
         <label className="text-sm sm:col-span-2">Description<textarea name="description" value={form.description} onChange={updateField} required maxLength="2000" rows="4" className="mt-1 w-full border border-stone-300 px-3 py-2" placeholder="Describe the fit, fabric, and any wear…" /></label>
         {!editingId && <label className="text-sm sm:col-span-2">Photos<input type="file" accept="image/*" multiple onChange={(event) => setImages(Array.from(event.target.files || []).slice(0, 5))} className="mt-1 block w-full border border-stone-300 px-3 py-2" /><span className="mt-1 block text-xs text-gray-500">Choose up to five images.</span></label>}
@@ -158,6 +170,7 @@ const Wardrobe = () => {
                 <div className="min-w-0 flex-1">
                   <h3 className="truncate font-medium">{item.title}</h3>
                   <p className="mt-1 text-xs text-gray-500">{item.brand} · {item.size} · {item.condition}</p>
+                  {item.buyingPrice !== undefined && <p className="mt-2 text-xs text-gray-500">Buying price · ₹{item.buyingPrice}</p>}
                   <p className="mt-2 text-sm">₹{item.estimatedValue} · <span className="capitalize">{item.status}</span></p>
                   <div className="mt-3 flex gap-3 text-xs">
                     {item.status === "available" && <button onClick={() => startEdit(item)} className="underline">Edit</button>}
