@@ -1,4 +1,4 @@
-# Swa Marketplace admin app
+# Clothing Exchange & Swap Marketplace admin app
 
 The admin app provides marketplace analytics, member suspension/restoration, clothing-listing moderation, active swap monitoring, and dispute resolution.
 

@@ -1,12 +1,12 @@
-﻿# Swa Marketplace — Project Report
+﻿# Clothing Exchange & Swap Marketplace — Project Report
 
 **Prepared:** October 26, 2026  
-**Project:** Clothing Exchange / Swa Marketplace  
+**Project:** Clothing Exchange & Swap Marketplace  
 **Repository:** satyaki95/Clothing-Exchange---Swa-Marketplace
 
 ## 1. Executive Summary
 
-Swa Marketplace is a clothing resale and peer-to-peer exchange platform that combines traditional e-commerce with community-driven fashion trading. The application supports browsing catalog products, listing personal clothing items for sale, discovering nearby listings, request swaps, messaging fellow members, and placing orders for both new and community listings.
+Clothing Exchange & Swap Marketplace is a clothing resale and peer-to-peer exchange platform that combines traditional e-commerce with community-driven fashion trading. The application supports browsing catalog products, listing personal clothing items for sale, discovering nearby listings, request swaps, messaging fellow members, and placing orders for both new and community listings.
 
 The repository includes three major runtime components:
 
@@ -24,7 +24,7 @@ The codebase is structurally well organized and includes modular routes, control
 
 ## 2. Project Objectives
 
-The primary goal of Swa Marketplace is to create a frictionless clothing exchange ecosystem where users can:
+The primary goal of Clothing Exchange & Swap Marketplace is to create a frictionless clothing exchange ecosystem where users can:
 
 - purchase catalog items using a conventional storefront and cart flow
 - sell or exchange private wardrobe items in a community marketplace
@@ -422,6 +422,6 @@ Before production launch, the project should prioritize:
 
 ## 15. Conclusion
 
-Swa Marketplace is a substantial full-stack clothing exchange project with a realistic business model and a clear technical architecture. It combines catalog commerce, community listings, swaps, order processing, and admin moderation in a way that is coherent and extendable.
+Clothing Exchange & Swap Marketplace is a substantial full-stack clothing exchange project with a realistic business model and a clear technical architecture. It combines catalog commerce, community listings, swaps, order processing, and admin moderation in a way that is coherent and extendable.
 
 The current repository demonstrates a strong base implementation and a practical product direction. With production-focused hardening around auth, payment safety, file validation, and deployment configuration, it can evolve into a reliable marketplace platform for buying, selling, and swapping clothing.

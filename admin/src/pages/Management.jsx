@@ -108,7 +108,7 @@ const Management = ({ section, token }) => {
   return (
     <main>
       <div className="mb-6 flex items-end justify-between gap-3">
-        <div><p className="text-xs uppercase tracking-[0.2em] text-emerald-800">Swa Marketplace</p><h1 className="mt-1 text-2xl font-semibold text-gray-900">{config.title}</h1></div>
+        <div><p className="text-xs uppercase tracking-[0.2em] text-emerald-800">Clothing Exchange &amp; Swap Marketplace</p><h1 className="mt-1 text-2xl font-semibold text-gray-900">{config.title}</h1></div>
         <button onClick={load} className="border border-gray-300 px-4 py-2 text-xs">Refresh</button>
       </div>
 

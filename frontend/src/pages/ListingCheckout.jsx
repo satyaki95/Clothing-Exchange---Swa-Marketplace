@@ -150,7 +150,7 @@ const ListingCheckout = () => {
         key: data.keyId,
         amount: data.razorpayOrder.amount,
         currency: data.razorpayOrder.currency,
-        name: "Swa Marketplace",
+        name: "Clothing Exchange & Swap Marketplace",
         description: `Purchase: ${listing.title}`,
         order_id: data.razorpayOrder.id,
         prefill: {

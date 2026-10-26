@@ -148,7 +148,7 @@ const PlaceOrder = () => {
           key: keyId,
           amount: razorpayOrder.amount,
           currency: razorpayOrder.currency,
-          name: "Swa Marketplace",
+          name: "Clothing Exchange & Swap Marketplace",
           description: "Order payment",
           order_id: razorpayOrder.id,
           prefill: {

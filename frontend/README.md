@@ -1,4 +1,4 @@
-# Swa Marketplace web app
+# Clothing Exchange & Swap Marketplace web app
 
 The customer app supports account registration and sign-in, member profiles, clothing listings, swap requests, negotiation messages, value estimates, and location-based discovery. The existing resale storefront remains available under **Shop**.
 
