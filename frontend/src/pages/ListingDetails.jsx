@@ -6,7 +6,7 @@ import { ShopContext } from "../context/ShopContext";
 
 const ListingDetails = () => {
   const { listingId } = useParams();
-  const { backendUrl, token } = useContext(ShopContext);
+  const { backendUrl, token, addListingToCart, listingCartItems } = useContext(ShopContext);
   const navigate = useNavigate();
   const [listing, setListing] = useState(null);
   const [selectedImage, setSelectedImage] = useState("");
@@ -156,6 +156,17 @@ const ListingDetails = () => {
             className="mt-3 w-full border border-gray-900 px-6 py-3 text-sm hover:bg-stone-50"
           >
             {token ? `Buy for ₹${listing.estimatedValue}` : "Sign in to buy"}
+          </button>
+          <button
+            onClick={() => addListingToCart(listingId)}
+            disabled={listingCartItems.some((itemId) => itemId === listingId)}
+            className="mt-3 w-full border border-emerald-800 px-6 py-3 text-sm text-emerald-900 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {!token
+              ? "Sign in to add to cart"
+              : listingCartItems.some((itemId) => itemId === listingId)
+                ? "Already in cart"
+                : "Add to cart"}
           </button>
         </section>
       </div>

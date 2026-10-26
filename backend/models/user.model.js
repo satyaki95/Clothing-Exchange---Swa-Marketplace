@@ -22,6 +22,11 @@ const userSchema = new mongoose.Schema(
       type: Object,
       default: {},
     },
+    listingCartData: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "Listing",
+      default: [],
+    },
     city: { type: String, default: "", trim: true },
     state: { type: String, default: "", trim: true },
     postalCode: { type: String, default: "", trim: true },

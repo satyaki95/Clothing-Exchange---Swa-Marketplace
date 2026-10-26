@@ -771,7 +771,10 @@ const verifyRazorpayPayment = async (req, res) => {
 const getUserOrders = async (req, res) => {
   try {
     const orders = await orderModel
-      .find({ userId: req.userId })
+      .find({
+        userId: req.userId,
+        $or: [{ paymentMethod: "cod" }, { payment: true }],
+      })
       .populate("items.productId")
       .populate({
         path: "items.listingId",

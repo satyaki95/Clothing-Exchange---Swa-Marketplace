@@ -13,12 +13,14 @@ const Navbar = () => {
     token,
     setToken,
     setCartItems,
+    setListingCartItems,
   } = useContext(ShopContext);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     setToken("");
     setCartItems({});
+    setListingCartItems([]);
     navigate("/login");
   };
 

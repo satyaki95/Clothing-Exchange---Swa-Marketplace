@@ -17,6 +17,7 @@ const ShopContextProvider = (props) => {
   const [search, setSearch] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [cartItems, setCartItems] = useState({});
+  const [listingCartItems, setListingCartItems] = useState([]);
   const [products, setProducts] = useState([]);
   const [token, setToken] = useState(() => localStorage.getItem("token") || "");
   const navigate = useNavigate();
@@ -64,6 +65,45 @@ const ShopContextProvider = (props) => {
     }
   };
 
+  const addListingToCart = async (listingId) => {
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+    try {
+      const { data } = await axios.post(
+        `${backendUrl}/api/cart/listing/add`,
+        { listingId },
+        { headers: { token } },
+      );
+      setListingCartItems(data.listingCartData || []);
+      toast.success(data.message || "Listing added to cart.");
+    } catch (error) {
+      if (error.response?.status === 401) {
+        localStorage.removeItem("token");
+        setToken("");
+      }
+      toast.error(error.response?.data?.message || "Unable to add listing to cart.");
+    }
+  };
+
+  const removeListingFromCart = async (listingId) => {
+    try {
+      const { data } = await axios.post(
+        `${backendUrl}/api/cart/listing/remove`,
+        { listingId },
+        { headers: { token } },
+      );
+      setListingCartItems(data.listingCartData || []);
+    } catch (error) {
+      if (error.response?.status === 401) {
+        localStorage.removeItem("token");
+        setToken("");
+      }
+      toast.error(error.response?.data?.message || "Unable to remove listing from cart.");
+    }
+  };
+
   const getCartCount = () => {
     let totalCount = 0;
 
@@ -78,7 +118,7 @@ const ShopContextProvider = (props) => {
         }
       }
     }
-    return totalCount;
+    return totalCount + listingCartItems.length;
   };
 
   const updateQuantity = async (itemId, size, quantity) => {
@@ -153,6 +193,7 @@ const ShopContextProvider = (props) => {
           },
         );
         setCartItems(response.data.cartData);
+        setListingCartItems(response.data.listingCartData || []);
       } catch (error) {
         if (error.response?.status === 401) {
           localStorage.removeItem("token");
@@ -164,8 +205,11 @@ const ShopContextProvider = (props) => {
 
   useEffect(() => {
     getProductsData();
-    getUserCart(localStorage.getItem("token") || "");
   }, []);
+
+  useEffect(() => {
+    getUserCart(token);
+  }, [token]);
 
   const value = {
     products,
@@ -177,6 +221,10 @@ const ShopContextProvider = (props) => {
     setShowSearch,
     cartItems,
     setCartItems,
+    listingCartItems,
+    setListingCartItems,
+    addListingToCart,
+    removeListingFromCart,
     addToCart,
     getCartCount,
     updateQuantity,

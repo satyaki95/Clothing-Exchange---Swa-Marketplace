@@ -31,7 +31,7 @@ const addressFields = [
 
 const ListingCheckout = () => {
   const { listingId } = useParams();
-  const { backendUrl, token, navigate } = useContext(ShopContext);
+  const { backendUrl, token, navigate, removeListingFromCart } = useContext(ShopContext);
   const routerNavigate = useNavigate();
   const [searchParams] = useSearchParams();
   const canceledOrderId = searchParams.get("canceled") === "1"
@@ -94,6 +94,7 @@ const ListingCheckout = () => {
     setAddress((current) => ({ ...current, [event.target.name]: event.target.value }));
 
   const completeOrder = () => {
+    removeListingFromCart(listingId);
     toast.success("Purchase confirmed. You can track it in Orders.");
     routerNavigate("/orders");
   };
